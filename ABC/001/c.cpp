@@ -1,0 +1,40 @@
+#include <bits/stdc++.h>
+using namespace std;
+int main() {
+int deg, y;
+cin>>deg>>y;
+y = static_cast<int>(y/60.0*10+0.5);
+if(y<=2) cout << "C";
+else if(deg<112.5||deg>=3487.5) cout << "N";
+else if(deg<337.5) cout << "NNE";
+else if(deg<562.5) cout << "NE";
+else if(deg<787.5) cout << "ENE";
+else if(deg<1012.5) cout << "E";
+else if(deg<1237.5) cout << "ESE";
+else if(deg<1462.5) cout << "SE";
+else if(deg<1687.5) cout << "SSE";
+else if(deg<1912.5) cout << "S";
+else if(deg<2137.5) cout << "SSW";
+else if(deg<2362.5) cout << "SW";
+else if(deg<2587.5) cout << "WSW";
+else if(deg<2812.5) cout << "W";
+else if(deg<3037.5) cout << "WNW";
+else if(deg<3262.5) cout << "NW";
+else if(deg<3487.5) cout << "NNW";
+cout << " ";
+if(y<=2) cout<<0;
+else if(y<=15) cout<<1;
+else if(y<=33) cout<<2;
+else if(y<=54) cout<<3;
+else if(y<=79) cout<<4;
+else if(y<=107) cout<<5;
+else if(y<=138) cout<<6;
+else if(y<=171) cout<<7;
+else if(y<=207) cout<<8;
+else if(y<=244) cout<<9;
+else if(y<=284) cout<<10;
+else if(y<=326) cout<<11;
+else cout<<12;
+cout << endl;
+return 0;
+}
