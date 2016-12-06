@@ -5,6 +5,7 @@
 | ```ABC``` | AtCoder Beginner Contest |
 | ```AGC``` | AtCoder Grand Contest |
 | ```ARC``` | AtCoder Regular Contest |
+| ```Codeforces``` | Codeforces |
 | ```codefes2014``` | CODE FESTIVAL 2014 |
 | ```codefes2015``` | CODE FESTIVAL 2015 |
 | ```codefes2016``` | CODE FESTIVAL 2016 |
