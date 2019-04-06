@@ -5,23 +5,35 @@
 #include <functional>
 using namespace std;
 
-const int INF = 1e8;
-const int MOD = 1e9 + 7;
+#define Int int64_t
 
-template<typename T>
-void calcCombTable(vector<vector<T>>& table, int maxN, int maxR, int mod = 1) {
-    for (int n = 1; n <= maxN; ++n) {
-        vector<T> row;
-        for (int r = 0; r <= n; ++r) {
+const Int INF = 1e8;
+const Int MOD = 1e9 + 7;
+
+
+// X*Y領域のうち D+L個を選ぶ C(X*Y, D+L)
+//
+
+vector<vector<Int>> calcCombTable(Int maxN, Int maxR, Int mod = 1) {
+    vector<vector<Int>> comb(maxN + 1);
+    for (Int n = 0; n <= maxN; ++n) {
+        vector<Int> row(n + 1);
+        for (Int r = 0; r <= n; ++r) {
             if (r == 0 || r == n) {
-                row.push_back(static_cast<T>(1));
+                row[r] = 1;
             }
             else {
-                row.push_back((table[n-2][r-1] + table[n-2][r]) % mod);
+                cerr << comb[n-1][r-1] << " " << comb[n-1][r] << endl;
+                row[r] = (comb[n-1][r-1] + comb[n-1][r]) % mod;
             }
         }
-        table.push_back(row);
+        comb[n] = row;
     }
+    return comb;
+}
+
+Int calc(const vector<vector<Int>>& comb, int c, int r, int x, int y, int d, int l) {
+    return comb[x*y][d+l] * (c-x+1)*(r-y+1) % MOD;
 }
 
 int main() {
@@ -30,9 +42,23 @@ int main() {
     cin >> R >> C >> X >> Y >> D >> L;
 
     // arrangement of desk and rack ({}_{X*Y}C_{D})
-    vector<vector<long long int>> comb;
-    calcCombTable(comb, X*Y, D, MOD);
-    cout << ((comb[X*Y-1][D] * (X*Y - D - L)) % MOD * ((R-X+1)*(C-Y+1) % MOD)) % MOD << endl;
+    vector<vector<Int>> comb = calcCombTable(R*C, D+L, MOD);
+    for (auto&& r : comb) { for (auto&& x : r) cerr << x << " "; cerr << endl; }
+    //cout << ((comb[X*Y][D] * (X*Y - D - L)) % MOD * ((R-X+1)*(C-Y+1) % MOD)) % MOD << endl;
+
+    cerr << comb[R*C][D+L] << endl;
+    cerr << 2 * comb[(R-1)*C][D+L] + 2 * comb[R*(C-1)][D+L] << endl;
+    cerr << comb[(R-2)*C][D+L] + comb[R*(C-2)][D+L] << endl;
+    cerr << 2 * comb[(R-2)*(C-1)][D+L] + 2 * comb[(R-1)*(C-2)][D+L] << endl;
+    cerr << comb[(R-2)*(C-2)][D+L] << endl;
+
+    cout << calc(comb, C, R, X, Y, D, L) 
+            - ( 2 * calc(comb, C - 1, R, X, Y, D, L) + 2 * calc(comb, C, R - 1, X, Y, D, L) )
+            + ( calc(comb, C - 2, R, X, Y, D, L) + calc(comb, C, R - 2, X, Y, D, L)
+                + 4 * calc(comb, C - 1, R - 1, X, Y, D, L) )
+            - ( 2 * calc(comb, C - 1, R - 2, X, Y, D, L) + 2 * calc(comb, C - 2, R - 1, X, Y, D, L) )
+            + calc(comb, C - 2, R - 2, X, Y, D, L)
+        << endl;
 
     return 0;
 }
