@@ -1,64 +1,61 @@
-#include <iostream>
-#include <vector>
-#include <cstdio>
-#include <algorithm>
-#include <functional>
+#include <bits/stdc++.h>
 using namespace std;
 
-#define Int int64_t
+using Int = int64_t;
 
 const Int INF = 1e8;
 const Int MOD = 1e9 + 7;
 
+template<int N>
+struct Comb {
+    Int array[N+1][N+1] = {{1}};
 
-// X*Y領域のうち D+L個を選ぶ C(X*Y, D+L)
-//
-
-vector<vector<Int>> calcCombTable(Int maxN, Int maxR, Int mod = 1) {
-    vector<vector<Int>> comb(maxN + 1);
-    for (Int n = 0; n <= maxN; ++n) {
-        vector<Int> row(n + 1);
-        for (Int r = 0; r <= n; ++r) {
-            if (r == 0 || r == n) {
-                row[r] = 1;
-            }
-            else {
-                cerr << comb[n-1][r-1] << " " << comb[n-1][r] << endl;
-                row[r] = (comb[n-1][r-1] + comb[n-1][r]) % mod;
+    constexpr Comb() {
+        for (int n = 1; n <= N; ++n) {
+            array[n][0] = array[n][n] = 1;
+            for (int r = 1; r < n; ++r) {
+                array[n][r] = (array[n-1][r-1] + array[n-1][r]) % MOD;
             }
         }
-        comb[n] = row;
     }
-    return comb;
-}
 
-Int calc(const vector<vector<Int>>& comb, int c, int r, int x, int y, int d, int l) {
-    return comb[x*y][d+l] * (c-x+1)*(r-y+1) % MOD;
-}
+    constexpr auto operator()(Int n, Int r) const {
+        return array[n][r];
+    }
+};
+
+constexpr auto comb = Comb<30*30>();
 
 int main() {
     int R, C, X, Y, D, L;
 
-    cin >> R >> C >> X >> Y >> D >> L;
+    cin >> R >> C >> Y >> X >> D >> L;
 
-    // arrangement of desk and rack ({}_{X*Y}C_{D})
-    vector<vector<Int>> comb = calcCombTable(R*C, D+L, MOD);
-    for (auto&& r : comb) { for (auto&& x : r) cerr << x << " "; cerr << endl; }
-    //cout << ((comb[X*Y][D] * (X*Y - D - L)) % MOD * ((R-X+1)*(C-Y+1) % MOD)) % MOD << endl;
+    Int ans = 0;
 
-    cerr << comb[R*C][D+L] << endl;
-    cerr << 2 * comb[(R-1)*C][D+L] + 2 * comb[R*(C-1)][D+L] << endl;
-    cerr << comb[(R-2)*C][D+L] + comb[R*(C-2)][D+L] << endl;
-    cerr << 2 * comb[(R-2)*(C-1)][D+L] + 2 * comb[(R-1)*(C-2)][D+L] << endl;
-    cerr << comb[(R-2)*(C-2)][D+L] << endl;
+    for (int x = 0; x <= 2; ++x) {
+        if (X - x < 0) break;
+        for (int y = 0; y <= 2; ++y) {
+            if (Y - y < 0) break;
 
-    cout << calc(comb, C, R, X, Y, D, L) 
-            - ( 2 * calc(comb, C - 1, R, X, Y, D, L) + 2 * calc(comb, C, R - 1, X, Y, D, L) )
-            + ( calc(comb, C - 2, R, X, Y, D, L) + calc(comb, C, R - 2, X, Y, D, L)
-                + 4 * calc(comb, C - 1, R - 1, X, Y, D, L) )
-            - ( 2 * calc(comb, C - 1, R - 2, X, Y, D, L) + 2 * calc(comb, C - 2, R - 1, X, Y, D, L) )
-            + calc(comb, C - 2, R - 2, X, Y, D, L)
-        << endl;
+            // 左右端・上下端をそれぞれ x 辺・y 辺使わない場合の置き方
+            auto t = comb((X-x)*(Y-y), D+L) * comb(D+L, D) % MOD;
+            // 1辺使わない場合は，どっちの辺を選ぶかで2通り
+            t = t * ((x == 1) + 1) * ((y == 1) + 1) % MOD;
+
+            // 包除原理
+            if ((x + y) % 2 == 0) {
+                ans += t;
+            } else {
+                ans -= t;
+            }
+            
+            ans = (ans + MOD) % MOD;
+        }
+    }
+    ans = ans * (C - X + 1) % MOD * (R - Y + 1) % MOD;
+
+    cout << ans << endl;
 
     return 0;
 }
