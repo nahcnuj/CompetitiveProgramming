@@ -1,5 +1,9 @@
 #include <bits/stdc++.h>
 
+using   vi = std::vector<int>;
+using  vvi = std::vector<std::vector<int>>;
+using vvvi = std::vector<std::vector<std::vector<int>>>;
+
 struct Vertex {
     int i, j;
 
@@ -8,21 +12,22 @@ struct Vertex {
 
     bool operator!=(const Vertex& rhs) const { return i != rhs.i || j != rhs.j; }
 };
+using VertexPtr = std::shared_ptr<Vertex>;
 
 const int W = 30, H = 30;
 
-std::vector<std::vector<int>> Q(H, std::vector<int>(W));
+vvi Q(H, vi(W));
 auto compare = [](const Vertex& a, const Vertex& b) {
     return Q[a.i][a.j] > Q[b.i][b.j];
 };
 auto&& pq = std::priority_queue<Vertex, std::vector<Vertex>, decltype(compare)>(compare);
 
-std::vector<std::vector<std::vector<int>>> distance(H, std::vector<std::vector<int>>(W, std::vector<int>(2, 5000)));
+vvvi distance(H, vvi(W, vi(2, 5000)));
 
 auto dijkstra(Vertex s, Vertex t) {
-    std::vector<std::vector<std::shared_ptr<Vertex>>> prev(H, std::vector<std::shared_ptr<Vertex>>(W));
+    std::vector<std::vector<VertexPtr>> prev(H, std::vector<VertexPtr>(W));
 
-    std::vector<std::vector<int>> d(H, std::vector<int>(W, std::numeric_limits<int>::max()));
+    vvi d(H, vi(W, std::numeric_limits<int>::max()));
     d[s.i][s.j] = 0;
 
     pq.emplace(s.i, s.j);
@@ -66,8 +71,8 @@ auto dijkstra(Vertex s, Vertex t) {
     return std::make_pair(d, prev);
 }
 
-auto getMovingPath(Vertex t, std::vector<std::vector<std::shared_ptr<Vertex>>> prevs) {
-    std::vector<std::shared_ptr<Vertex>> path;
+auto getMovingPath(Vertex t, std::vector<std::vector<VertexPtr>> prevs) {
+    std::vector<VertexPtr> path;
     std::stringstream ss;
     auto p = std::move(prevs[t.i][t.j]);
     while (p) {
