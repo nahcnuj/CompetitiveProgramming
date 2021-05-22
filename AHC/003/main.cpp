@@ -140,7 +140,7 @@ int main() {
     }
 
     std::map<Path, int> pathes;
-    std::map<Edge, std::set<std::shared_ptr<Path>>> pathesSelectedEdge;
+    std::map<Edge, std::set<Path>> pathesSelectedEdge;
 
     for (int i = 0; i < 1000; ++i) {
         int si, sj, ti, tj;
@@ -165,16 +165,27 @@ int main() {
 
         pathes.emplace(path, length);
         {
+            std::vector<std::shared_ptr<Edge>> edges;
+            std::vector<std::shared_ptr<Edge>> edgesUsedFirst;
+            int unknownLength = length;
             std::unique_ptr<Vertex> prev;
             for (auto&& vertex : path) {
                 if (prev) {
                     auto&& e = getEdge(*prev, vertex);
+                    edges.emplace_back(std::make_shared<Edge>(e));
                     if (pathesSelectedEdge.find(e) == pathesSelectedEdge.end()) {
-                        distance[e] = length / path.size();
+                        edgesUsedFirst.emplace_back(std::make_shared<Edge>(e));
+                    } else {
+                        unknownLength -= distance[e];
                     }
-                    pathesSelectedEdge[e].emplace(std::make_shared<Path>(path));
                 }
                 prev = std::make_unique<Vertex>(vertex);
+            }
+            for (auto&& pe : edges) {
+                pathesSelectedEdge[*pe].emplace(path);
+            }
+            for (auto&& e : edgesUsedFirst) {
+                distance[*e] = unknownLength / edgesUsedFirst.size();
             }
         }
     }
