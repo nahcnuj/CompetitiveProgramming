@@ -10,8 +10,8 @@ struct Vertex {
     Vertex() : exists(false) {}
     Vertex(int i, int j) : i(i), j(j) {}
 
-    bool operator!=(const Vertex& rhs) const { return i != rhs.i || j != rhs.j; }
-    explicit operator bool() const { return exists; }
+    inline bool operator!=(const Vertex& rhs) const { return i != rhs.i || j != rhs.j; }
+    inline explicit operator bool() const { return exists; }
 
 private:
     bool exists = true;    // on the graph.
