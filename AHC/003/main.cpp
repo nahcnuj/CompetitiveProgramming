@@ -168,7 +168,11 @@ int main() {
             std::unique_ptr<Vertex> prev;
             for (auto&& vertex : path) {
                 if (prev) {
-                    pathesSelectedEdge[getEdge(*prev, vertex)].emplace(std::make_shared<Path>(path));
+                    auto&& e = getEdge(*prev, vertex);
+                    if (pathesSelectedEdge.find(e) == pathesSelectedEdge.end()) {
+                        distance[e] = length / path.size();
+                    }
+                    pathesSelectedEdge[e].emplace(std::make_shared<Path>(path));
                 }
                 prev = std::make_unique<Vertex>(vertex);
             }
