@@ -76,7 +76,6 @@ std::map<Edge, int> distance;
 using Path = std::vector<Vertex>;
 
 auto dijkstra(Vertex s, Vertex t) {
-    // std::cerr << "dijkstra" << std::endl;
     std::vector<std::vector<Vertex>> prevs(H, std::vector<Vertex>(W));
 
     vvi d(H, vi(W, std::numeric_limits<int>::max()));
@@ -116,12 +115,10 @@ auto dijkstra(Vertex s, Vertex t) {
 }
 
 auto getMovingPath(Vertex t, std::vector<std::vector<Vertex>> prevs) {
-    // std::cerr << "getMovingPath" << std::endl;
     Path path;
     std::stringstream ss;
     auto&& p = prevs[t.i][t.j];
     while (p) {
-        // std::cerr << p.i << p.j << std::endl;
         if (p.i < t.i) {
             ss << 'D';
         } else if (p.i > t.i) {
@@ -152,7 +149,6 @@ int main() {
     std::map<Edge, std::set<Path>> pathesSelectedEdge;
 
     for (int i = 0; i < 1000; ++i) {
-        // std::cerr << "Query " << i+1 << std::endl;
         int si, sj, ti, tj;
         std::cin >> si >> sj >> ti >> tj;
         auto&& s = Vertex{si, sj}, t = Vertex{ti, tj};
@@ -172,7 +168,6 @@ int main() {
 
         int length;
         std::cin >> length;
-        //std::cerr << length << std::endl;
 
         pathes.emplace(path, length);
         {
@@ -181,23 +176,12 @@ int main() {
             {
                 std::unique_ptr<Vertex> prev;
                 for (auto&& v : path) {
-                    // std::cerr << unknownLength << std::endl;
                     if (prev) {
                         auto&& e = getEdge(*prev, v);
-                        // std::cerr << '(' << e.vertex.i << ',' << e.vertex.j << ")-" << e.direction << "->\n";
-                        // std::cerr << '(' << prev->i << ',' << prev->j << ")-(" << v.i << ',' << v.j << ")?\n";
                         auto x = pathesSelectedEdge.find(e);
                         if (x == pathesSelectedEdge.end()) {
                             edgesUsedFirst.emplace_back(std::make_shared<Edge>(e));
                         } else {
-                            // std::cerr << '(' << x->first.vertex.i << ',' << x->first.vertex.j << ")-" << x->first.direction << "->\n";
-                            // for (auto&& p : x->second) {
-                            //     for (auto&& v : p) {
-                            //         std::cerr << '(' << v.i << ',' << v.j << ")-";
-                            //     }
-                            //     std::cerr << '\n';
-                            // }
-                            // std::cerr << distance[e] << std::endl;
                             unknownLength -= distance[e];
                         }
                     }
@@ -208,15 +192,9 @@ int main() {
                 std::unique_ptr<Vertex> prev;
                 for (auto&& v : path) {
                     if (prev) {
-                        // std::cerr << '(' << prev->i << ',' << prev->j << ")-(" << v.i << ',' << v.j << ")!\n";
                         auto&& e = getEdge(*prev, v);
                         assert(e);
                         pathesSelectedEdge[e].emplace(path);
-                        // std::cerr << '(' << e.vertex.i << ',' << e.vertex.j << ")-" << e.direction << "->\n";
-                        // for (auto&& v : path) {
-                        //     std::cerr << '(' << v.i << ',' << v.j << ")-";
-                        // }
-                        // std::cerr << '\n';
                     }
                     prev = std::make_unique<Vertex>(v);
                 }
@@ -224,57 +202,9 @@ int main() {
             if (unknownLength >= 0) {
                 if (!edgesUsedFirst.empty()) {
                     auto&& length = unknownLength / edgesUsedFirst.size();
-                    // std::cerr << length << std::endl;
                     for (auto&& e : edgesUsedFirst) {
-                        // std::cerr << e->vertex.i << ',' << e->vertex.j << ',' << e->direction <<' '<< length << std::endl;
                         const int threshold = 1000;
-            // for (int i = 0; i < H-1; ++i) {
-            //     for (int d = 1; d >= 0; --d) {
-            //         if (d == 1) { std::cerr << "   "; }
-            //         for (int j = 0; j < W-1; ++j) {
-            //             std::fprintf(stderr, "%6d ", distance[{i,j,static_cast<Direction>(d)}]);
-            //         }
-            //         std::cerr << std::endl;
-            //     }
-            // }
-            // std::cerr << "----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << std::endl;
                         distance[*e] = length;
-                        // for (auto&& x : distance) {
-                        //     std::cerr << x.first.vertex.i << ' ' << x.first.vertex.j << ' ' << x.first.direction << "->" << x.second << std::endl;
-                        // }
-            // for (int i = 0; i < H-1; ++i) {
-            //     for (int d = 1; d >= 0; --d) {
-            //         if (d == 1) { std::cerr << "   "; }
-            //         for (int j = 0; j < W-1; ++j) {
-            //             std::fprintf(stderr, "%6d ", distance[{i,j,static_cast<Direction>(d)}]);
-            //         }
-            //         std::cerr << std::endl;
-            //     }
-            // }
-            // std::cerr << "----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << std::endl;
-                        // if (length > 5000 + threshold || length < 5000 - threshold) {
-                        //     if (e->direction == Down) {
-                        //         int j = e->vertex.j;
-                        //         for (int i = 0; i < H-1; ++i) {
-                        //             distance[{i, j, Down}] = length;
-                        //         }
-                        //     } else {
-                        //         int i = e->vertex.i;
-                        //         for (int j = 0; j < W-1; ++j) {
-                        //             distance[{i, j, Right}] = length;
-                        //         }
-                        //     }
-                        // }
-            // for (int i = 0; i < H-1; ++i) {
-            //     for (int d = 1; d >= 0; --d) {
-            //         if (d == 1) { std::cerr << "   "; }
-            //         for (int j = 0; j < W-1; ++j) {
-            //             std::fprintf(stderr, "%6d ", distance[{i,j,static_cast<Direction>(d)}]);
-            //         }
-            //         std::cerr << std::endl;
-            //     }
-            // }
-            // std::cerr << "----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << std::endl;
                     }
                 }
             } else {
@@ -282,31 +212,14 @@ int main() {
                 std::unique_ptr<Vertex> prev;
                 for (auto&& v : path) {
                     if (prev) {
-                        // std::cerr << '(' << prev->i << ',' << prev->j << ")-(" << v.i << ',' << v.j << ")!\n";
                         auto&& e = getEdge(*prev, v);
                         assert(e);
                         distance[e] = distancePerEdge;
-                        // std::cerr << '(' << e.vertex.i << ',' << e.vertex.j << ")-" << e.direction << "->\n";
-                        // for (auto&& v : path) {
-                        //     std::cerr << '(' << v.i << ',' << v.j << ")-";
-                        // }
-                        // std::cerr << '\n';
                     }
                     prev = std::make_unique<Vertex>(v);
                 }
             }
         }
-
-        // for (int i = 0; i < H-1; ++i) {
-        //     for (int d = 1; d >= 0; --d) {
-        //         if (d == 1) { std::cerr << "   "; }
-        //         for (int j = 0; j < W-1; ++j) {
-        //             std::fprintf(stderr, "%6d ", distance[{i,j,static_cast<Direction>(d)}]);
-        //         }
-        //         std::cerr << std::endl;
-        //     }
-        // }
-        // std::cerr << "====================================================================================================================================================================================================" << std::endl;
     }
     return 0;
 }
