@@ -10,15 +10,18 @@ struct Vertex {
     Vertex() : exists(false) {}
     Vertex(int i, int j) : i(i), j(j) {}
 
-    inline bool operator==(const Vertex& rhs) const { return !(*this != rhs); }
-    inline bool operator!=(const Vertex& rhs) const { return i != rhs.i || j != rhs.j; }
-
     inline explicit operator bool() const { return exists; }
 
 private:
     bool exists = true;    // on the graph.
 };
-inline bool operator<(const Vertex& lhs, const Vertex& rhs) { return lhs.i < rhs.i && lhs.j < rhs.j; }
+inline bool operator<(const Vertex& lhs, const Vertex& rhs) {
+    return lhs.i < rhs.i ? true
+        : lhs.i == rhs.i ? lhs.j < rhs.j
+        : false;
+}
+inline bool operator==(const Vertex& lhs, const Vertex& rhs) { return !(lhs<rhs) && !(rhs<lhs); }
+inline bool operator!=(const Vertex& lhs, const Vertex& rhs) { return !(lhs==rhs); }
 
 enum Direction {
     Down,
@@ -33,14 +36,16 @@ struct Edge {
     Edge(Vertex vertex, Direction direction) : vertex(vertex), direction(direction) {}
     Edge(int i, int j, Direction direction) : vertex(i, j), direction(direction) {}
 
-    inline bool operator==(const Edge& rhs) const { return vertex == rhs.vertex && direction == rhs.direction; }
-
     inline explicit operator bool() const { return exists; }
 
 private:
     bool exists = true;    // on the graph.
 };
-inline bool operator<(const Edge& lhs, const Edge& rhs) { return lhs.vertex < rhs.vertex && lhs.direction < rhs.direction; }
+inline bool operator<(const Edge& lhs, const Edge& rhs) {
+    return lhs.vertex < rhs.vertex ? true
+        : lhs.vertex == rhs.vertex ? lhs.direction < rhs.direction
+        : false;
+}
 
 Edge getEdge(Vertex from, Vertex to) {
     if ((from.i - to.i) * (to.i - from.i) > 1 || (from.j - to.j) * (to.j - from.j) > 1) {
@@ -136,10 +141,10 @@ auto getMovingPath(Vertex t, std::vector<std::vector<Vertex>> prevs) {
 }
 
 int main() {
-    for (int i = 0; i < H; ++i) {
-        for (int j = 0; j < W; ++j) {
-            distance.emplace(Edge{i, j, Down}, 5000);
-            distance.emplace(Edge{i, j, Right}, 5000);
+    for (int i = 0; i < H-1; ++i) {
+        for (int j = 0; j < W-1; ++j) {
+            distance.emplace(Edge{i, j, Down}, 1000);
+            distance.emplace(Edge{i, j, Right}, 1000);
         }
     }
 
@@ -173,75 +178,121 @@ int main() {
         {
             std::vector<std::shared_ptr<Edge>> edgesUsedFirst;
             int unknownLength = length;
-            std::unique_ptr<Vertex> prev;
-            for (auto&& v : path) {
-                // std::cerr << unknownLength << std::endl;
-                if (prev) {
-                    auto&& e = getEdge(*prev, v);
-                    // std::cerr << '(' << e.vertex.i << ',' << e.vertex.j << ")-" << e.direction << "->\n";
-                    // std::cerr << '(' << prev->i << ',' << prev->j << ")-(" << v.i << ',' << v.j << ")?\n";
-                    auto x = pathesSelectedEdge.find(e);
-                    if (x == pathesSelectedEdge.begin() || x == pathesSelectedEdge.end() || x == --pathesSelectedEdge.end()) {
-                        edgesUsedFirst.emplace_back(std::make_shared<Edge>(e));
-                    } else {
-                        // std::cerr << '(' << x->first.vertex.i << ',' << x->first.vertex.j << ")-" << x->first.direction << "->\n";
-                        // for (auto&& p : x->second) {
-                        //     for (auto&& v : p) {
-                        //         std::cerr << '(' << v.i << ',' << v.j << ")-";
-                        //     }
-                        //     std::cerr << '\n';
+            {
+                std::unique_ptr<Vertex> prev;
+                for (auto&& v : path) {
+                    // std::cerr << unknownLength << std::endl;
+                    if (prev) {
+                        auto&& e = getEdge(*prev, v);
+                        // std::cerr << '(' << e.vertex.i << ',' << e.vertex.j << ")-" << e.direction << "->\n";
+                        // std::cerr << '(' << prev->i << ',' << prev->j << ")-(" << v.i << ',' << v.j << ")?\n";
+                        auto x = pathesSelectedEdge.find(e);
+                        if (x == pathesSelectedEdge.end()) {
+                            edgesUsedFirst.emplace_back(std::make_shared<Edge>(e));
+                        } else {
+                            // std::cerr << '(' << x->first.vertex.i << ',' << x->first.vertex.j << ")-" << x->first.direction << "->\n";
+                            // for (auto&& p : x->second) {
+                            //     for (auto&& v : p) {
+                            //         std::cerr << '(' << v.i << ',' << v.j << ")-";
+                            //     }
+                            //     std::cerr << '\n';
+                            // }
+                            // std::cerr << distance[e] << std::endl;
+                            unknownLength -= distance[e];
+                        }
+                    }
+                    prev = std::make_unique<Vertex>(v);
+                }
+            }
+            {
+                std::unique_ptr<Vertex> prev;
+                for (auto&& v : path) {
+                    if (prev) {
+                        // std::cerr << '(' << prev->i << ',' << prev->j << ")-(" << v.i << ',' << v.j << ")!\n";
+                        auto&& e = getEdge(*prev, v);
+                        assert(e);
+                        pathesSelectedEdge[e].emplace(path);
+                        // std::cerr << '(' << e.vertex.i << ',' << e.vertex.j << ")-" << e.direction << "->\n";
+                        // for (auto&& v : path) {
+                        //     std::cerr << '(' << v.i << ',' << v.j << ")-";
                         // }
-                        // std::cerr << distance[e] << std::endl;
-                        unknownLength -= distance[e];
-                        assert(unknownLength >= 0);
+                        // std::cerr << '\n';
+                    }
+                    prev = std::make_unique<Vertex>(v);
+                }
+            }
+            if (unknownLength >= 0) {
+                if (!edgesUsedFirst.empty()) {
+                    auto&& length = unknownLength / edgesUsedFirst.size();
+                    // std::cerr << length << std::endl;
+                    for (auto&& e : edgesUsedFirst) {
+                        // std::cerr << e->vertex.i << ',' << e->vertex.j << ',' << e->direction <<' '<< length << std::endl;
+                        const int threshold = 1000;
+            // for (int i = 0; i < H-1; ++i) {
+            //     for (int d = 1; d >= 0; --d) {
+            //         if (d == 1) { std::cerr << "   "; }
+            //         for (int j = 0; j < W-1; ++j) {
+            //             std::fprintf(stderr, "%6d ", distance[{i,j,static_cast<Direction>(d)}]);
+            //         }
+            //         std::cerr << std::endl;
+            //     }
+            // }
+            // std::cerr << "----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << std::endl;
+                        distance[*e] = length;
+                        // for (auto&& x : distance) {
+                        //     std::cerr << x.first.vertex.i << ' ' << x.first.vertex.j << ' ' << x.first.direction << "->" << x.second << std::endl;
+                        // }
+            // for (int i = 0; i < H-1; ++i) {
+            //     for (int d = 1; d >= 0; --d) {
+            //         if (d == 1) { std::cerr << "   "; }
+            //         for (int j = 0; j < W-1; ++j) {
+            //             std::fprintf(stderr, "%6d ", distance[{i,j,static_cast<Direction>(d)}]);
+            //         }
+            //         std::cerr << std::endl;
+            //     }
+            // }
+            // std::cerr << "----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << std::endl;
+                        // if (length > 5000 + threshold || length < 5000 - threshold) {
+                        //     if (e->direction == Down) {
+                        //         int j = e->vertex.j;
+                        //         for (int i = 0; i < H-1; ++i) {
+                        //             distance[{i, j, Down}] = length;
+                        //         }
+                        //     } else {
+                        //         int i = e->vertex.i;
+                        //         for (int j = 0; j < W-1; ++j) {
+                        //             distance[{i, j, Right}] = length;
+                        //         }
+                        //     }
+                        // }
+            // for (int i = 0; i < H-1; ++i) {
+            //     for (int d = 1; d >= 0; --d) {
+            //         if (d == 1) { std::cerr << "   "; }
+            //         for (int j = 0; j < W-1; ++j) {
+            //             std::fprintf(stderr, "%6d ", distance[{i,j,static_cast<Direction>(d)}]);
+            //         }
+            //         std::cerr << std::endl;
+            //     }
+            // }
+            // std::cerr << "----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << std::endl;
                     }
                 }
-                prev = std::make_unique<Vertex>(v);
-            }
-            for (auto&& v : path) {
-                if (prev) {
-                    // std::cerr << '(' << prev->i << ',' << prev->j << ")-(" << v.i << ',' << v.j << ")!\n";
-                    auto&& e = getEdge(*prev, v);
-                    assert(e);
-                    pathesSelectedEdge[e].emplace(path);
-                    // std::cerr << '(' << e.vertex.i << ',' << e.vertex.j << ")-" << e.direction << "->\n";
-                    // for (auto&& v : path) {
-                    //     std::cerr << '(' << v.i << ',' << v.j << ")-";
-                    // }
-                    // std::cerr << '\n';
-                }
-                prev = std::make_unique<Vertex>(v);
-            }
-            if (!edgesUsedFirst.empty()) {
-                auto&& length = unknownLength / edgesUsedFirst.size();
-                // std::cerr << length << std::endl;
-                for (auto&& e : edgesUsedFirst) {
-                    // std::cerr << e->vertex.i << ',' << e->vertex.j << ',' << e->direction <<' '<< length << std::endl;
-                    const int threshold = 1000;
-                    distance[*e] = length;
-                    // if (length > 5000 + threshold || length < 5000 - threshold) {
-                    //     if (e->direction == Down) {
-                    //         int j = e->vertex.j;
-                    //         for (int i = 0; i < H-1; ++i) {
-                    //             distance[{i, j, Down}] = length;
-                    //         }
-                    //     } else {
-                    //         int i = e->vertex.i;
-                    //         for (int j = 0; j < W-1; ++j) {
-                    //             distance[{i, j, Right}] = length;
-                    //         }
-                    //     }
-                    // }
-        // for (int i = 0; i < H-1; ++i) {
-        //     for (int d = 1; d >= 0; --d) {
-        //         if (d == 1) { std::cerr << "   "; }
-        //         for (int j = 0; j < W-1; ++j) {
-        //             std::fprintf(stderr, "%6d ", distance[{i,j,static_cast<Direction>(d)}]);
-        //         }
-        //         std::cerr << std::endl;
-        //     }
-        // }
-        // std::cerr << "----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << std::endl;
+            } else {
+                int distancePerEdge = length / (path.size()-1);
+                std::unique_ptr<Vertex> prev;
+                for (auto&& v : path) {
+                    if (prev) {
+                        // std::cerr << '(' << prev->i << ',' << prev->j << ")-(" << v.i << ',' << v.j << ")!\n";
+                        auto&& e = getEdge(*prev, v);
+                        assert(e);
+                        distance[e] = distancePerEdge;
+                        // std::cerr << '(' << e.vertex.i << ',' << e.vertex.j << ")-" << e.direction << "->\n";
+                        // for (auto&& v : path) {
+                        //     std::cerr << '(' << v.i << ',' << v.j << ")-";
+                        // }
+                        // std::cerr << '\n';
+                    }
+                    prev = std::make_unique<Vertex>(v);
                 }
             }
         }
