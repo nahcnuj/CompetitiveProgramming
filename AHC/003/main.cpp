@@ -123,6 +123,8 @@ int main() {
         }
     }
 
+    std::map<Path, int> pathes;
+
     for (int i = 0; i < 1000; ++i) {
         int si, sj, ti, tj;
         std::cin >> si >> sj >> ti >> tj;
@@ -130,7 +132,7 @@ int main() {
 
         auto&& prevs = dijkstra(s, t);
 
-        std::vector<Vertex> path;
+        Path path;
         {
             auto&& ret = getMovingPath(t, prevs);
             path = ret.first;
@@ -144,7 +146,7 @@ int main() {
         int length;
         std::cin >> length;
 
-        // TODO: update Distance
+        pathes.emplace(path, length);
     }
     return 0;
 }
