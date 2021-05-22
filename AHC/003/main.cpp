@@ -71,6 +71,7 @@ std::map<Edge, int> distance;
 using Path = std::vector<Vertex>;
 
 auto dijkstra(Vertex s, Vertex t) {
+    // std::cerr << "dijkstra" << std::endl;
     std::vector<std::vector<Vertex>> prevs(H, std::vector<Vertex>(W));
 
     vvi d(H, vi(W, std::numeric_limits<int>::max()));
@@ -105,14 +106,17 @@ auto dijkstra(Vertex s, Vertex t) {
 			}
         }
     }
+    // prevs[s.i][s.j] = Vertex{};
     return prevs;
 }
 
 auto getMovingPath(Vertex t, std::vector<std::vector<Vertex>> prevs) {
+    // std::cerr << "getMovingPath" << std::endl;
     Path path;
     std::stringstream ss;
     auto&& p = prevs[t.i][t.j];
     while (p) {
+        // std::cerr << p.i << p.j << std::endl;
         if (p.i < t.i) {
             ss << 'D';
         } else if (p.i > t.i) {
@@ -143,6 +147,7 @@ int main() {
     std::map<Edge, std::set<Path>> pathesSelectedEdge;
 
     for (int i = 0; i < 1000; ++i) {
+        // std::cerr << "Query " << i+1 << std::endl;
         int si, sj, ti, tj;
         std::cin >> si >> sj >> ti >> tj;
         auto&& s = Vertex{si, sj}, t = Vertex{ti, tj};
@@ -165,27 +170,53 @@ int main() {
 
         pathes.emplace(path, length);
         {
-            std::vector<std::shared_ptr<Edge>> edges;
             std::vector<std::shared_ptr<Edge>> edgesUsedFirst;
             int unknownLength = length;
             std::unique_ptr<Vertex> prev;
-            for (auto&& vertex : path) {
+            for (auto&& v : path) {
+                // std::cerr << unknownLength << std::endl;
                 if (prev) {
-                    auto&& e = getEdge(*prev, vertex);
-                    edges.emplace_back(std::make_shared<Edge>(e));
-                    if (pathesSelectedEdge.find(e) == pathesSelectedEdge.end()) {
+                    auto&& e = getEdge(*prev, v);
+                    // std::cerr << '(' << e.vertex.i << ',' << e.vertex.j << ")-" << e.direction << "->\n";
+                    // std::cerr << '(' << prev->i << ',' << prev->j << ")-(" << v.i << ',' << v.j << ")?\n";
+                    auto x = pathesSelectedEdge.find(e);
+                    if (x == pathesSelectedEdge.begin() || x == pathesSelectedEdge.end() || x == --pathesSelectedEdge.end()) {
                         edgesUsedFirst.emplace_back(std::make_shared<Edge>(e));
                     } else {
+                        // std::cerr << '(' << x->first.vertex.i << ',' << x->first.vertex.j << ")-" << x->first.direction << "->\n";
+                        // for (auto&& p : x->second) {
+                        //     for (auto&& v : p) {
+                        //         std::cerr << '(' << v.i << ',' << v.j << ")-";
+                        //     }
+                        //     std::cerr << '\n';
+                        // }
+                        // std::cerr << distance[e] << std::endl;
                         unknownLength -= distance[e];
+                        assert(unknownLength >= 0);
                     }
                 }
-                prev = std::make_unique<Vertex>(vertex);
+                prev = std::make_unique<Vertex>(v);
             }
-            for (auto&& pe : edges) {
-                pathesSelectedEdge[*pe].emplace(path);
+            for (auto&& v : path) {
+                if (prev) {
+                    // std::cerr << '(' << prev->i << ',' << prev->j << ")-(" << v.i << ',' << v.j << ")!\n";
+                    auto&& e = getEdge(*prev, v);
+                    assert(e);
+                    pathesSelectedEdge[e].emplace(path);
+                    // std::cerr << '(' << e.vertex.i << ',' << e.vertex.j << ")-" << e.direction << "->\n";
+                    // for (auto&& v : path) {
+                    //     std::cerr << '(' << v.i << ',' << v.j << ")-";
+                    // }
+                    // std::cerr << '\n';
+                }
+                prev = std::make_unique<Vertex>(v);
             }
-            for (auto&& e : edgesUsedFirst) {
-                distance[*e] = unknownLength / edgesUsedFirst.size();
+            if (!edgesUsedFirst.empty()) {
+                auto&& length = unknownLength / edgesUsedFirst.size();
+                for (auto&& e : edgesUsedFirst) {
+                    //std::cerr << e->vertex.i << ',' << e->vertex.j << ',' << e->direction <<' '<< length << std::endl;
+                    distance[*e] = length;
+                }
             }
         }
     }
