@@ -106,7 +106,6 @@ auto dijkstra(Vertex s, Vertex t) {
 			}
         }
     }
-    // prevs[s.i][s.j] = Vertex{};
     return prevs;
 }
 
