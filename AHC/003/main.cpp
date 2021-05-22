@@ -17,7 +17,7 @@ auto compare = [](const Vertex& a, const Vertex& b) {
 };
 auto&& pq = std::priority_queue<Vertex, std::vector<Vertex>, decltype(compare)>(compare);
 
-std::vector<std::vector<std::vector<int>>> distance(H, std::vector<std::vector<int>>(W, std::vector<int>(2, 1000)));
+std::vector<std::vector<std::vector<int>>> distance(H, std::vector<std::vector<int>>(W, std::vector<int>(2, 5000)));
 
 auto dijkstra(Vertex s, Vertex t) {
     std::vector<std::vector<std::shared_ptr<Vertex>>> prev(H, std::vector<std::shared_ptr<Vertex>>(W));
