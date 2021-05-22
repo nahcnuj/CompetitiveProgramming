@@ -7,12 +7,15 @@ using vvvi = std::vector<std::vector<std::vector<int>>>;
 struct Vertex {
     int i, j;
 
-    Vertex(){}
+    Vertex() : exists(false) {}
     Vertex(int i, int j) : i(i), j(j) {}
 
     bool operator!=(const Vertex& rhs) const { return i != rhs.i || j != rhs.j; }
+    explicit operator bool() const { return exists; }
+
+private:
+    bool exists = true;    // on the graph.
 };
-using VertexPtr = std::shared_ptr<Vertex>;
 
 const int W = 30, H = 30;
 
@@ -25,7 +28,7 @@ auto&& pq = std::priority_queue<Vertex, std::vector<Vertex>, decltype(compare)>(
 vvvi distance(H, vvi(W, vi(2, 5000)));
 
 auto dijkstra(Vertex s, Vertex t) {
-    std::vector<std::vector<VertexPtr>> prev(H, std::vector<VertexPtr>(W));
+    std::vector<std::vector<Vertex>> prev(H, std::vector<Vertex>(W));
 
     vvi d(H, vi(W, std::numeric_limits<int>::max()));
     d[s.i][s.j] = 0;
@@ -63,7 +66,7 @@ auto dijkstra(Vertex s, Vertex t) {
             }
 			if (alt < d[v.i][v.j]) {
 				d[v.i][v.j] = alt;
-				prev[v.i][v.j].reset(new Vertex{u.i, u.j});
+				prev[v.i][v.j] = u;
                 pq.emplace(v.i, v.j);
 			}
         }
@@ -71,36 +74,36 @@ auto dijkstra(Vertex s, Vertex t) {
     return std::make_pair(d, prev);
 }
 
-auto getMovingPath(Vertex t, std::vector<std::vector<VertexPtr>> prevs) {
-    std::vector<VertexPtr> path;
+auto getMovingPath(Vertex t, std::vector<std::vector<Vertex>> prevs) {
+    std::vector<Vertex> path;
     std::stringstream ss;
-    auto p = std::move(prevs[t.i][t.j]);
+    auto&& p = prevs[t.i][t.j];
     while (p) {
-        if (p->i < t.i) {
+        if (p.i < t.i) {
             ss << 'D';
-        } else if (p->i > t.i) {
+        } else if (p.i > t.i) {
             ss << 'U';
-        } else if (p->j < t.j) {
+        } else if (p.j < t.j) {
             ss << 'R';
-        } else if (p->j > t.j) {
+        } else if (p.j > t.j) {
             ss << 'L';
         } else {
             abort();
         }
-        t = *p;
-        path.emplace_back(std::move(p));
-        p = std::move(prevs[t.i][t.j]);
+        t = p;
+        path.emplace_back(t);
+        p = prevs[t.i][t.j];
     }
-    return std::make_pair(std::move(path), ss.str());
+    return std::make_pair(path, ss.str());
 }
 
 int main() {
     for (int i = 0; i < 1000; ++i) {
         int si, sj, ti, tj;
         std::cin >> si >> sj >> ti >> tj;
-        auto s = Vertex{si, sj}, t = Vertex{ti, tj};
-        auto ret = dijkstra(s, t);
-        auto path = getMovingPath(t, ret.second);
+        auto&& s = Vertex{si, sj}, t = Vertex{ti, tj};
+        auto&& ret = dijkstra(s, t);
+        auto&& path = getMovingPath(t, ret.second);
         for (auto&& itr = path.second.rbegin(); itr != path.second.rend(); ++itr) {
             std::cout << *itr;
         }
