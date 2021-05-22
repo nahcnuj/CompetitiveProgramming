@@ -30,7 +30,7 @@ auto dijkstra(Vertex s, Vertex t) {
         auto u = pq.top(); pq.pop();
         Vertex nexts[4];
         int i = 0;
-        //if (u != t) {
+        if (u != t) {
             if (u.i > 0) {
                 nexts[i++] = {u.i - 1, u.j};
             }
@@ -43,7 +43,7 @@ auto dijkstra(Vertex s, Vertex t) {
             if (u.j < W-1) {
                 nexts[i++] = {u.i, u.j + 1};
             }
-        //}
+        }
         while (--i >= 0) {
             int alt = d[u.i][u.j];
             auto&& v = nexts[i];
