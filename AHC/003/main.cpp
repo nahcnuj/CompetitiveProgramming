@@ -27,8 +27,10 @@ auto&& pq = std::priority_queue<Vertex, std::vector<Vertex>, decltype(compare)>(
 
 vvvi distance(H, vvi(W, vi(2, 5000)));
 
+using Path = std::vector<Vertex>;
+
 auto dijkstra(Vertex s, Vertex t) {
-    std::vector<std::vector<Vertex>> prev(H, std::vector<Vertex>(W));
+    std::vector<std::vector<Vertex>> prevs(H, std::vector<Vertex>(W));
 
     vvi d(H, vi(W, std::numeric_limits<int>::max()));
     d[s.i][s.j] = 0;
@@ -66,16 +68,16 @@ auto dijkstra(Vertex s, Vertex t) {
             }
 			if (alt < d[v.i][v.j]) {
 				d[v.i][v.j] = alt;
-				prev[v.i][v.j] = u;
+				prevs[v.i][v.j] = u;
                 pq.emplace(v.i, v.j);
 			}
         }
     }
-    return std::make_pair(d, prev);
+    return prevs;
 }
 
 auto getMovingPath(Vertex t, std::vector<std::vector<Vertex>> prevs) {
-    std::vector<Vertex> path;
+    Path path;
     std::stringstream ss;
     auto&& p = prevs[t.i][t.j];
     while (p) {
@@ -102,13 +104,19 @@ int main() {
         int si, sj, ti, tj;
         std::cin >> si >> sj >> ti >> tj;
         auto&& s = Vertex{si, sj}, t = Vertex{ti, tj};
-        auto&& ret = dijkstra(s, t);
-        auto&& path = getMovingPath(t, ret.second);
-        for (auto&& itr = path.second.rbegin(); itr != path.second.rend(); ++itr) {
-            std::cout << *itr;
+
+        auto&& prevs = dijkstra(s, t);
+
+        std::vector<Vertex> path;
+        {
+            auto&& ret = getMovingPath(t, prevs);
+            path = ret.first;
+            for (auto&& itr = ret.second.rbegin(); itr != ret.second.rend(); ++itr) {
+                std::cout << *itr;
+            }
+            std::cout << std::endl;
+            std::cout.flush();
         }
-        std::cout << std::endl;
-        std::cout.flush();
 
         int length;
         std::cin >> length;
