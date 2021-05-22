@@ -12,13 +12,13 @@ struct Vertex {
 
     inline bool operator==(const Vertex& rhs) const { return !(*this != rhs); }
     inline bool operator!=(const Vertex& rhs) const { return i != rhs.i || j != rhs.j; }
-    inline bool operator<(const Vertex& rhs) const { return i < rhs.i && j < rhs.j; }
 
     inline explicit operator bool() const { return exists; }
 
 private:
     bool exists = true;    // on the graph.
 };
+inline bool operator<(const Vertex& lhs, const Vertex& rhs) { return lhs.i < rhs.i && lhs.j < rhs.j; }
 
 enum Direction {
     Down,
@@ -34,13 +34,13 @@ struct Edge {
     Edge(int i, int j, Direction direction) : vertex(i, j), direction(direction) {}
 
     inline bool operator==(const Edge& rhs) const { return vertex == rhs.vertex && direction == rhs.direction; }
-    inline bool operator<(const Edge& rhs) const { return vertex < rhs.vertex && direction < rhs.direction; }
 
     inline explicit operator bool() const { return exists; }
 
 private:
     bool exists = true;    // on the graph.
 };
+inline bool operator<(const Edge& lhs, const Edge& rhs) { return lhs.vertex < rhs.vertex && lhs.direction < rhs.direction; }
 
 Edge getEdge(Vertex from, Vertex to) {
     if ((from.i - to.i) * (to.i - from.i) > 1 || (from.j - to.j) * (to.j - from.j) > 1) {
@@ -99,11 +99,12 @@ auto dijkstra(Vertex s, Vertex t) {
         while (--i >= 0) {
             auto&& v = nexts[i];
             int alt = d[u.i][u.j] + distance[getEdge(u, v)];
-			if (alt < d[v.i][v.j]) {
-				d[v.i][v.j] = alt;
-				prevs[v.i][v.j] = u;
+            if (alt < d[v.i][v.j]) {
+                d[v.i][v.j] = alt;
+                prevs[v.i][v.j] = u;
+                Q[v.i][v.j] = alt;
                 pq.emplace(v.i, v.j);
-			}
+            }
         }
     }
     return prevs;
@@ -166,6 +167,7 @@ int main() {
 
         int length;
         std::cin >> length;
+        //std::cerr << length << std::endl;
 
         pathes.emplace(path, length);
         {
@@ -212,12 +214,48 @@ int main() {
             }
             if (!edgesUsedFirst.empty()) {
                 auto&& length = unknownLength / edgesUsedFirst.size();
+                // std::cerr << length << std::endl;
                 for (auto&& e : edgesUsedFirst) {
-                    //std::cerr << e->vertex.i << ',' << e->vertex.j << ',' << e->direction <<' '<< length << std::endl;
+                    // std::cerr << e->vertex.i << ',' << e->vertex.j << ',' << e->direction <<' '<< length << std::endl;
+                    const int threshold = 1000;
                     distance[*e] = length;
+                    // if (length > 5000 + threshold || length < 5000 - threshold) {
+                    //     if (e->direction == Down) {
+                    //         int j = e->vertex.j;
+                    //         for (int i = 0; i < H-1; ++i) {
+                    //             distance[{i, j, Down}] = length;
+                    //         }
+                    //     } else {
+                    //         int i = e->vertex.i;
+                    //         for (int j = 0; j < W-1; ++j) {
+                    //             distance[{i, j, Right}] = length;
+                    //         }
+                    //     }
+                    // }
+        // for (int i = 0; i < H-1; ++i) {
+        //     for (int d = 1; d >= 0; --d) {
+        //         if (d == 1) { std::cerr << "   "; }
+        //         for (int j = 0; j < W-1; ++j) {
+        //             std::fprintf(stderr, "%6d ", distance[{i,j,static_cast<Direction>(d)}]);
+        //         }
+        //         std::cerr << std::endl;
+        //     }
+        // }
+        // std::cerr << "----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << std::endl;
                 }
             }
         }
+
+        // for (int i = 0; i < H-1; ++i) {
+        //     for (int d = 1; d >= 0; --d) {
+        //         if (d == 1) { std::cerr << "   "; }
+        //         for (int j = 0; j < W-1; ++j) {
+        //             std::fprintf(stderr, "%6d ", distance[{i,j,static_cast<Direction>(d)}]);
+        //         }
+        //         std::cerr << std::endl;
+        //     }
+        // }
+        // std::cerr << "====================================================================================================================================================================================================" << std::endl;
     }
     return 0;
 }
