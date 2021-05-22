@@ -10,8 +10,10 @@ struct Vertex {
     Vertex() : exists(false) {}
     Vertex(int i, int j) : i(i), j(j) {}
 
+    inline bool operator==(const Vertex& rhs) const { return !(*this != rhs); }
     inline bool operator!=(const Vertex& rhs) const { return i != rhs.i || j != rhs.j; }
     inline bool operator<(const Vertex& rhs) const { return i < rhs.i && j < rhs.j; }
+
     inline explicit operator bool() const { return exists; }
 
 private:
@@ -27,11 +29,34 @@ struct Edge {
     Vertex vertex;
     Direction direction;
 
+    Edge() : exists(false) {}
     Edge(Vertex vertex, Direction direction) : vertex(vertex), direction(direction) {}
     Edge(int i, int j, Direction direction) : vertex(i, j), direction(direction) {}
 
+    inline bool operator==(const Edge& rhs) const { return vertex == rhs.vertex && direction == rhs.direction; }
     inline bool operator<(const Edge& rhs) const { return vertex < rhs.vertex && direction < rhs.direction; }
+
+    inline explicit operator bool() const { return exists; }
+
+private:
+    bool exists = true;    // on the graph.
 };
+
+Edge getEdge(Vertex from, Vertex to) {
+    if ((from.i - to.i) * (to.i - from.i) > 1 || (from.j - to.j) * (to.j - from.j) > 1) {
+        return {};
+    }
+    if (from.i < to.i) {
+        return {from, Down};
+    } else if (from.i > to.i) {
+        return {to, Down};
+    } else if (from.j < to.j) {
+        return {from, Right};
+    } else if (from.j > to.j) {
+        return {to, Right};
+    }
+    return {};
+}
 
 const int W = 30, H = 30;
 
@@ -71,17 +96,8 @@ auto dijkstra(Vertex s, Vertex t) {
             }
         }
         while (--i >= 0) {
-            int alt = d[u.i][u.j];
             auto&& v = nexts[i];
-            if (v.i < u.i) {
-                alt += distance[{v, Down}];
-            } else if (v.i > u.i) {
-                alt += distance[{u, Down}];
-            } else if (v.j < u.j) {
-                alt += distance[{v, Right}];
-            } else {
-                alt += distance[{u, Right}];
-            }
+            int alt = d[u.i][u.j] + distance[getEdge(u, v)];
 			if (alt < d[v.i][v.j]) {
 				d[v.i][v.j] = alt;
 				prevs[v.i][v.j] = u;
@@ -124,6 +140,7 @@ int main() {
     }
 
     std::map<Path, int> pathes;
+    std::map<Edge, std::set<std::shared_ptr<Path>>> pathesSelectedEdge;
 
     for (int i = 0; i < 1000; ++i) {
         int si, sj, ti, tj;
@@ -147,6 +164,15 @@ int main() {
         std::cin >> length;
 
         pathes.emplace(path, length);
+        {
+            std::unique_ptr<Vertex> prev;
+            for (auto&& vertex : path) {
+                if (prev) {
+                    pathesSelectedEdge[getEdge(*prev, vertex)].emplace(std::make_shared<Path>(path));
+                }
+                prev = std::make_unique<Vertex>(vertex);
+            }
+        }
     }
     return 0;
 }
