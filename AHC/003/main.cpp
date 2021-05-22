@@ -11,6 +11,7 @@ struct Vertex {
     Vertex(int i, int j) : i(i), j(j) {}
 
     inline bool operator!=(const Vertex& rhs) const { return i != rhs.i || j != rhs.j; }
+    inline bool operator<(const Vertex& rhs) const { return i < rhs.i && j < rhs.j; }
     inline explicit operator bool() const { return exists; }
 
 private:
@@ -22,6 +23,16 @@ enum Direction {
     Right,
 };
 
+struct Edge {
+    Vertex vertex;
+    Direction direction;
+
+    Edge(Vertex vertex, Direction direction) : vertex(vertex), direction(direction) {}
+    Edge(int i, int j, Direction direction) : vertex(i, j), direction(direction) {}
+
+    inline bool operator<(const Edge& rhs) const { return vertex < rhs.vertex && direction < rhs.direction; }
+};
+
 const int W = 30, H = 30;
 
 vvi Q(H, vi(W));
@@ -30,7 +41,7 @@ auto compare = [](const Vertex& a, const Vertex& b) {
 };
 auto&& pq = std::priority_queue<Vertex, std::vector<Vertex>, decltype(compare)>(compare);
 
-vvvi distance(H, vvi(W, vi(2, 5000)));
+std::map<Edge, int> distance;
 
 using Path = std::vector<Vertex>;
 
@@ -63,13 +74,13 @@ auto dijkstra(Vertex s, Vertex t) {
             int alt = d[u.i][u.j];
             auto&& v = nexts[i];
             if (v.i < u.i) {
-                alt += distance[v.i][v.j][Down];
+                alt += distance[{v, Down}];
             } else if (v.i > u.i) {
-                alt += distance[u.i][u.j][Down];
+                alt += distance[{u, Down}];
             } else if (v.j < u.j) {
-                alt += distance[v.i][v.j][Right];
+                alt += distance[{v, Right}];
             } else {
-                alt += distance[u.i][u.j][Right];
+                alt += distance[{u, Right}];
             }
 			if (alt < d[v.i][v.j]) {
 				d[v.i][v.j] = alt;
@@ -105,6 +116,13 @@ auto getMovingPath(Vertex t, std::vector<std::vector<Vertex>> prevs) {
 }
 
 int main() {
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            distance.emplace(Edge{i, j, Down}, 5000);
+            distance.emplace(Edge{i, j, Right}, 5000);
+        }
+    }
+
     for (int i = 0; i < 1000; ++i) {
         int si, sj, ti, tj;
         std::cin >> si >> sj >> ti >> tj;
