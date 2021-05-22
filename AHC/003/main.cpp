@@ -17,6 +17,11 @@ private:
     bool exists = true;    // on the graph.
 };
 
+enum Direction {
+    Down,
+    Right,
+};
+
 const int W = 30, H = 30;
 
 vvi Q(H, vi(W));
@@ -58,13 +63,13 @@ auto dijkstra(Vertex s, Vertex t) {
             int alt = d[u.i][u.j];
             auto&& v = nexts[i];
             if (v.i < u.i) {
-                alt += distance[v.i][v.j][0];
+                alt += distance[v.i][v.j][Down];
             } else if (v.i > u.i) {
-                alt += distance[u.i][u.j][0];
+                alt += distance[u.i][u.j][Down];
             } else if (v.j < u.j) {
-                alt += distance[v.i][v.j][1];
+                alt += distance[v.i][v.j][Right];
             } else {
-                alt += distance[u.i][u.j][1];
+                alt += distance[u.i][u.j][Right];
             }
 			if (alt < d[v.i][v.j]) {
 				d[v.i][v.j] = alt;
