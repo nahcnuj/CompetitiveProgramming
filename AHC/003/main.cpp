@@ -139,7 +139,7 @@ int main() {
     }
 
     std::map<Path, int> pathes;
-    std::map<Edge, std::set<Path>> pathesSelectedEdge;
+    std::map<Edge, std::set<std::shared_ptr<Path>>> pathesSelectedEdge;
 
     for (int i = 0; i < 1000; ++i) {
         int si, sj, ti, tj;
@@ -187,7 +187,7 @@ int main() {
                     if (prev) {
                         auto&& e = getEdge(*prev, v);
                         assert(e);
-                        pathesSelectedEdge[e].emplace(path);
+                        pathesSelectedEdge[e].emplace(std::make_shared<Path>(path));
                     }
                     prev = std::make_unique<Vertex>(v);
                 }
