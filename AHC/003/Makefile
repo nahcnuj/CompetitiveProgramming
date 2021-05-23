@@ -5,7 +5,9 @@ LIBS    =
 OBJS    = ./main.o
 PROGRAM = ./a.out
 
-all:		$(PROGRAM)
+all:		compile benchmark compare-score
+
+compile:	$(PROGRAM)
 
 $(PROGRAM):	$(OBJS)
 	$(CC) $(OBJS) $(CFLAGS) $(LDFLAGS) $(LIBS) -o $(PROGRAM)
