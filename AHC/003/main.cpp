@@ -16,9 +16,7 @@ private:
     bool exists = true;    // on the graph.
 };
 inline bool operator<(const Vertex& lhs, const Vertex& rhs) {
-    return lhs.i < rhs.i ? true
-        : lhs.i == rhs.i ? lhs.j < rhs.j
-        : false;
+    return lhs.i < rhs.i || (lhs.i == rhs.i && lhs.j < rhs.j);
 }
 inline bool operator==(const Vertex& lhs, const Vertex& rhs) { return !(lhs<rhs) && !(rhs<lhs); }
 inline bool operator!=(const Vertex& lhs, const Vertex& rhs) { return !(lhs==rhs); }
@@ -42,9 +40,7 @@ private:
     bool exists = true;    // on the graph.
 };
 inline bool operator<(const Edge& lhs, const Edge& rhs) {
-    return lhs.vertex < rhs.vertex ? true
-        : lhs.vertex == rhs.vertex ? lhs.direction < rhs.direction
-        : false;
+    return lhs.vertex < rhs.vertex || (lhs.vertex == rhs.vertex && lhs.direction < rhs.direction);
 }
 
 Edge getEdge(Vertex from, Vertex to) {
@@ -66,9 +62,7 @@ Edge getEdge(Vertex from, Vertex to) {
 const int W = 30, H = 30;
 
 vvi Q(H, vi(W));
-auto compare = [](const Vertex& a, const Vertex& b) {
-    return Q[a.i][a.j] > Q[b.i][b.j];
-};
+auto compare = [](const Vertex& a, const Vertex& b) { return Q[a.i][a.j] > Q[b.i][b.j]; };
 auto&& pq = std::priority_queue<Vertex, std::vector<Vertex>, decltype(compare)>(compare);
 
 std::map<Edge, int> distance;
@@ -88,7 +82,6 @@ auto dijkstra(Vertex s, Vertex t) {
             continue;
         }
         std::set<Vertex> nexts;
-        int i = 0;
         if (u.i > 0) {
             nexts.emplace(u.i - 1, u.j);
         }
@@ -114,7 +107,7 @@ auto dijkstra(Vertex s, Vertex t) {
     return prevs;
 }
 
-auto getMovingPath(Vertex t, std::vector<std::vector<Vertex>> prevs) {
+auto getMovingPath(Vertex t, std::vector<std::vector<Vertex>>& prevs) {
     Path path;
     std::stringstream ss;
     auto&& p = prevs[t.i][t.j];
@@ -151,7 +144,8 @@ int main() {
     for (int i = 0; i < 1000; ++i) {
         int si, sj, ti, tj;
         std::cin >> si >> sj >> ti >> tj;
-        auto&& s = Vertex{si, sj}, t = Vertex{ti, tj};
+        auto&& s = Vertex{si, sj};
+        auto&& t = Vertex{ti, tj};
 
         auto&& prevs = dijkstra(s, t);
 
