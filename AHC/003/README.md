@@ -13,7 +13,7 @@ At first, download and build the official local tester in `./tools`.
 | Command | Description |
 |----|----|
 | `make compile` | Compile `main.cpp` |
-| `make test` | Execute `a.out` for `tools/in/0000.txt` |
+| `make test` | Execute `a.out` for an input file in `./tools/in/` (unless `TEST_IN` is specifed) |
 | `make benchmark` | Execute `a.out` for all input files and summarize scores and execution times |
 | `make compare-score` | Compare score file `./score.csv` with old one `./_score.csv` (unless `OLD_SCORE_FILE` is specified) |
 
