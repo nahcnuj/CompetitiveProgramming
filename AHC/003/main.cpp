@@ -149,16 +149,15 @@ int main() {
 
         auto&& prevs = dijkstra(s, t);
 
-        Path path;
-        {
+        auto&& path = [&]{
             auto&& ret = getMovingPath(t, prevs);
-            path = ret.first;
             for (auto&& itr = ret.second.rbegin(); itr != ret.second.rend(); ++itr) {
                 std::cout << *itr;
             }
             std::cout << std::endl;
             std::cout.flush();
-        }
+            return ret.first;
+        }();
 
         int length;
         std::cin >> length;
