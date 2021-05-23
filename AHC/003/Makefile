@@ -23,16 +23,17 @@ TESTER_DIR = ./tools
 TESTER_BIN = $(TESTER_DIR)/target/release/tester
 IN_DIR     = $(TESTER_DIR)/in
 IN_FILES   = $(wildcard $(IN_DIR)/*.txt)
+TEST_IN    = $(firstword $(IN_FILES))
 
 test:	$(PROGRAM)
-	time -p $(TESTER_BIN) $(firstword $(IN_FILES)) $(PROGRAM)
+	time -p $(TESTER_BIN) $(TEST_IN) $(PROGRAM)
 
 
-OUT_DIR    = ./out
-OUT_FILES  = $(addprefix $(OUT_DIR)/,$(patsubst $(IN_DIR)/%.txt,%.txt,$(IN_FILES)))
-ERR_DIR    = ./err
-ERR_FILES  = $(addprefix $(ERR_DIR)/,$(patsubst $(IN_DIR)/%.txt,%.txt,$(IN_FILES)))
-SCORE_FILE = ./scores.csv
+OUT_DIR        = ./out
+OUT_FILES      = $(addprefix $(OUT_DIR)/,$(patsubst $(IN_DIR)/%.txt,%.txt,$(IN_FILES)))
+ERR_DIR        = ./err
+ERR_FILES      = $(addprefix $(ERR_DIR)/,$(patsubst $(IN_DIR)/%.txt,%.txt,$(IN_FILES)))
+SCORE_FILE     = ./scores.csv
 OLD_SCORE_FILE = ./_scores.csv
 
 benchmark:	$(PROGRAM)
