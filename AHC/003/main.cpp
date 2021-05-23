@@ -87,22 +87,21 @@ auto dijkstra(Vertex s, Vertex t) {
         if (u == t) {
             continue;
         }
-        Vertex nexts[4];
+        std::set<Vertex> nexts;
         int i = 0;
         if (u.i > 0) {
-            nexts[i++] = {u.i - 1, u.j};
+            nexts.emplace(u.i - 1, u.j);
         }
         if (u.j > 0) {
-            nexts[i++] = {u.i, u.j - 1};
+            nexts.emplace(u.i, u.j - 1);
         }
         if (u.i < H-1) {
-            nexts[i++] = {u.i + 1, u.j};
+            nexts.emplace(u.i + 1, u.j);
         }
         if (u.j < W-1) {
-            nexts[i++] = {u.i, u.j + 1};
+            nexts.emplace(u.i, u.j + 1);
         }
-        while (--i >= 0) {
-            auto&& v = nexts[i];
+        for (auto&& v : nexts) {
             int alt = d[u.i][u.j] + distance[getEdge(u, v)];
             if (alt < d[v.i][v.j]) {
                 d[v.i][v.j] = alt;
