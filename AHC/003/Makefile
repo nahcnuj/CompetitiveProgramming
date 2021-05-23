@@ -37,22 +37,22 @@ OLD_SCORE_FILE = ./_scores.csv
 
 benchmark:	$(PROGRAM)
 	@$(MAKE) --no-print-directory pre-benchmark
-	@$(MAKE) --no-print-directory run-benchmark
+	@$(MAKE) $(MAKEFLAGS) --no-print-directory run-benchmark
 
 pre-benchmark:
-	rm -rf $(OUT_DIR) $(ERR_DIR)
+	@rm -rf $(OUT_DIR) $(ERR_DIR)
 
 run-benchmark:	$(SCORE_FILE)
 
 compare-score:	$(SCORE_FILE)
-	[ -f $(OLD_SCORE_FILE) ] && sdiff -s $(OLD_SCORE_FILE) $(SCORE_FILE) | tee | \
+	@[ -f $(OLD_SCORE_FILE) ] && sdiff -s $(OLD_SCORE_FILE) $(SCORE_FILE) | tee | \
 		xargs -n1 -I{} sh -c '\
 			echo "{}" | grep -oe "^[^,]\+" | sed "s/$$/: /" | tr -d "\n";\
 			echo "{}" | sed "s/^[^,]\+,\([^,]\+\)[^|]*|[^,]\+,\([^,]\+\).*/\1 - \2/" | bc;\
 			' || echo "not found old score file: $(OLD_SCORE_FILE)"
 
 $(SCORE_FILE):	$(OUT_FILES)
-	@echo 'seed,score,real,user,sys' >$@
+	@echo 'seed,score,real,user,sys,' >$@
 	@echo $(ERR_FILES) | tr ' ' "\n" | sort \
 		| xargs -n1 -I{} sh -c '\
 			echo -n $$(echo {} | sed "s|.*/0\+\([0-9]\+\)\.txt|\1|"),;\
@@ -62,8 +62,8 @@ $(SCORE_FILE):	$(OUT_FILES)
 			grep -e "^sys " {} | sed "s/^.* \(.*\)$$/\1,/" | tr -d "\n";\
 			echo' >>$@
 
-$(OUT_DIR)/%.txt:	$(IN_DIR)/%.txt $(OUT_DIR) $(ERR_DIR)
+$(OUT_DIR)/%.txt:	$(IN_DIR)/%.txt $(PROGRAM) $(OUT_DIR) $(ERR_DIR)
 	time -p $(TESTER_BIN) $< $(PROGRAM) >$@ 2>$(ERR_DIR)/$$(basename $@)
 
 $(OUT_DIR) $(ERR_DIR):
-	mkdir -p $@
+	@mkdir -p $@
