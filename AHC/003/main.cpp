@@ -171,8 +171,7 @@ int main() {
                 for (auto&& v : path) {
                     if (prev) {
                         auto&& e = getEdge(*prev, v);
-                        auto x = pathesSelectedEdge.find(e);
-                        if (x == pathesSelectedEdge.end()) {
+                        if (pathesSelectedEdge[e].empty()) {
                             edgesUsedFirst.emplace_back(std::make_shared<Edge>(e));
                         } else {
                             unknownLength -= distance[e];
