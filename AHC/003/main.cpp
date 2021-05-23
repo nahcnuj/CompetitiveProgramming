@@ -84,21 +84,22 @@ auto dijkstra(Vertex s, Vertex t) {
     pq.emplace(s.i, s.j);
     while (!pq.empty()) {
         auto u = pq.top(); pq.pop();
+        if (u == t) {
+            continue;
+        }
         Vertex nexts[4];
         int i = 0;
-        if (u != t) {
-            if (u.i > 0) {
-                nexts[i++] = {u.i - 1, u.j};
-            }
-            if (u.j > 0) {
-                nexts[i++] = {u.i, u.j - 1};
-            }
-            if (u.i < H-1) {
-                nexts[i++] = {u.i + 1, u.j};
-            }
-            if (u.j < W-1) {
-                nexts[i++] = {u.i, u.j + 1};
-            }
+        if (u.i > 0) {
+            nexts[i++] = {u.i - 1, u.j};
+        }
+        if (u.j > 0) {
+            nexts[i++] = {u.i, u.j - 1};
+        }
+        if (u.i < H-1) {
+            nexts[i++] = {u.i + 1, u.j};
+        }
+        if (u.j < W-1) {
+            nexts[i++] = {u.i, u.j + 1};
         }
         while (--i >= 0) {
             auto&& v = nexts[i];
