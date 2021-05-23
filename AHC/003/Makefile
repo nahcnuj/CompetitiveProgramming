@@ -2,8 +2,8 @@ CC      = g++
 CFLAGS  = -std=gnu++17 -Wall -Wextra -O2 -DONLINE_JUDGE -I/opt/boost/gcc/include -I/opt/ac-library
 LDFLAGS = -L/opt/boost/gcc/lib
 LIBS    =
-OBJS    = main.o
-PROGRAM = a.out
+OBJS    = ./main.o
+PROGRAM = ./a.out
 
 all:		$(PROGRAM)
 
@@ -17,21 +17,21 @@ clean:
 	rm -rf *.o *~ $(PROGRAM)
 
 
-TESTER_DIR = tools
+TESTER_DIR = ./tools
 TESTER_BIN = $(TESTER_DIR)/target/release/tester
 IN_DIR     = $(TESTER_DIR)/in
 IN_FILES   = $(wildcard $(IN_DIR)/*.txt)
 
 test:	$(PROGRAM)
-	time -p $(TESTER_BIN) $(firstword $(IN_FILES)) ./$(PROGRAM)
+	time -p $(TESTER_BIN) $(firstword $(IN_FILES)) $(PROGRAM)
 
 
-OUT_DIR    = out
+OUT_DIR    = ./out
 OUT_FILES  = $(addprefix $(OUT_DIR)/,$(patsubst $(IN_DIR)/%.txt,%.txt,$(IN_FILES)))
-ERR_DIR    = err
+ERR_DIR    = ./err
 ERR_FILES  = $(addprefix $(ERR_DIR)/,$(patsubst $(IN_DIR)/%.txt,%.txt,$(IN_FILES)))
-SCORE_FILE = scores.csv
-OLD_SCORE_FILE = _scores.csv
+SCORE_FILE = ./scores.csv
+OLD_SCORE_FILE = ./_scores.csv
 
 benchmark:	$(PROGRAM)
 	@$(MAKE) --no-print-directory pre-benchmark
@@ -61,7 +61,7 @@ $(SCORE_FILE):	$(OUT_FILES)
 			echo' >>$@
 
 $(OUT_DIR)/%.txt:	$(IN_DIR)/%.txt $(OUT_DIR) $(ERR_DIR)
-	time -p $(TESTER_BIN) $< ./$(PROGRAM) >$@ 2>$(ERR_DIR)/$$(basename $@)
+	time -p $(TESTER_BIN) $< $(PROGRAM) >$@ 2>$(ERR_DIR)/$$(basename $@)
 
 $(OUT_DIR) $(ERR_DIR):
 	mkdir -p $@
