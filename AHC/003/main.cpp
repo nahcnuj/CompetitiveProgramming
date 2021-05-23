@@ -43,7 +43,7 @@ inline bool operator<(const Edge& lhs, const Edge& rhs) {
     return lhs.vertex < rhs.vertex || (lhs.vertex == rhs.vertex && lhs.direction < rhs.direction);
 }
 
-Edge getEdge(Vertex from, Vertex to) {
+Edge getEdge(const Vertex& from, const Vertex& to) {
     if ((from.i - to.i) * (to.i - from.i) > 1 || (from.j - to.j) * (to.j - from.j) > 1) {
         return {};
     }
@@ -69,7 +69,7 @@ std::map<Edge, int> distance;
 
 using Path = std::vector<Vertex>;
 
-auto dijkstra(Vertex s, Vertex t) {
+auto dijkstra(const Vertex& s, const Vertex& t) {
     std::vector<std::vector<Vertex>> prevs(H, std::vector<Vertex>(W));
 
     vvi d(H, vi(W, std::numeric_limits<int>::max()));
