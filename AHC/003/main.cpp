@@ -133,8 +133,8 @@ auto getMovingPath(Vertex t, std::vector<std::vector<Vertex>>& prevs) {
 int main() {
     for (int i = 0; i < H-1; ++i) {
         for (int j = 0; j < W-1; ++j) {
-            distance.emplace(Edge{i, j, Down}, 1000);
-            distance.emplace(Edge{i, j, Right}, 1000);
+            distance.emplace(Edge{i, j, Down}, 5000);
+            distance.emplace(Edge{i, j, Right}, 5000);
         }
     }
 
