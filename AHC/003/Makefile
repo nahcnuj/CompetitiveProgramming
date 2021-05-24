@@ -48,7 +48,7 @@ run-benchmark:	$(PROGRAM) $(OUT_FILES)
 compare-score:	$(SCORE_FILE)
 	@[ -f $(OLD_SCORE_FILE) ] && bash bin/diff-score.bash $(OLD_SCORE_FILE) $(SCORE_FILE)
 
-$(SCORE_FILE):
+$(SCORE_FILE):	$(ERR_FILES)
 	@echo 'seed,score,real,user,sys,' >$@
 	@echo $(ERR_FILES) | tr ' ' "\n" | sort \
 		| xargs -n1 -I{} sh -c '\
