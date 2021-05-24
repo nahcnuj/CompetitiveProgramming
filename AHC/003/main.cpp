@@ -4,6 +4,8 @@ using   vi = std::vector<int>;
 using  vvi = std::vector<std::vector<int>>;
 using vvvi = std::vector<std::vector<std::vector<int>>>;
 
+const int W = 30, H = 30;
+
 struct Vertex {
     int i, j;
 
@@ -20,6 +22,8 @@ inline bool operator<(const Vertex& lhs, const Vertex& rhs) {
 }
 inline bool operator==(const Vertex& lhs, const Vertex& rhs) { return !(lhs<rhs) && !(rhs<lhs); }
 inline bool operator!=(const Vertex& lhs, const Vertex& rhs) { return !(lhs==rhs); }
+
+using Path = std::vector<Vertex>;
 
 enum Direction {
     Down,
@@ -58,12 +62,6 @@ Edge getEdge(const Vertex& from, const Vertex& to) {
     }
     return {};
 }
-
-const int W = 30, H = 30;
-
-vvi Q(H, vi(W));
-auto compare = [](const Vertex& a, const Vertex& b) { return Q[a.i][a.j] > Q[b.i][b.j]; };
-auto&& pq = std::priority_queue<Vertex, std::vector<Vertex>, decltype(compare)>(compare);
 
 struct PossibleLength {
     static const int MEDIUM = 5000;
@@ -111,15 +109,17 @@ struct PossibleLength {
 };
 inline bool operator<(const PossibleLength& lhs, const PossibleLength& rhs) { return lhs < rhs; }
 
+vvi Q(H, vi(W));
 std::map<Edge, PossibleLength> distance;
-
-using Path = std::vector<Vertex>;
 
 auto dijkstra(const Vertex& s, const Vertex& t) {
     std::vector<std::vector<Vertex>> prevs(H, std::vector<Vertex>(W));
 
     vvi d(H, vi(W, std::numeric_limits<int>::max()));
     d[s.i][s.j] = 0;
+
+    static const auto compare = [](const Vertex& a, const Vertex& b) { return Q[a.i][a.j] > Q[b.i][b.j]; };
+    auto&& pq = std::priority_queue<Vertex, std::vector<Vertex>, decltype(compare)>(compare);
 
     pq.emplace(s.i, s.j);
     while (!pq.empty()) {
@@ -143,9 +143,8 @@ auto dijkstra(const Vertex& s, const Vertex& t) {
         for (auto&& v : nexts) {
             int alt = d[u.i][u.j] + distance[getEdge(u, v)];
             if (alt < d[v.i][v.j]) {
-                d[v.i][v.j] = alt;
+                d[v.i][v.j] = Q[v.i][v.j] = alt;
                 prevs[v.i][v.j] = u;
-                Q[v.i][v.j] = alt;
                 pq.emplace(v.i, v.j);
             }
         }
