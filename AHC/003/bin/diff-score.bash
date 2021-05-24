@@ -8,8 +8,9 @@ do
     diff=$(echo $line | sed "s/^[^,]\+,\([^,]\+\)[^|]*|[^,]\+,\([^,]\+\).*/\1 - \2/" | bc)
     (( sum_diff  += $diff ))
     (( sum_diff2 += $diff * $diff ))
-    printf "%4d: %10d\n" $seed $diff
+    printf "%4d: %15d\n" $seed $diff
     (( num++ ))
 done < <(sdiff -s $@)
-printf " SUM: %10d\n" $sum_diff
-printf " AVG: %13.2f\n" $(echo "$sum_diff / $num" | bc -l)
+[ $num -eq 0 ] && echo 'No diff!' && exit
+printf " SUM: %15d\n" $sum_diff
+printf " AVG: %18.2f\n" $(echo "$sum_diff / $num" | bc -l)

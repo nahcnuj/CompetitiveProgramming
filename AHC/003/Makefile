@@ -36,19 +36,19 @@ ERR_FILES      = $(addprefix $(ERR_DIR)/,$(patsubst $(IN_DIR)/%.txt,%.txt,$(IN_F
 SCORE_FILE     = ./scores.csv
 OLD_SCORE_FILE = ./_scores.csv
 
-benchmark:	$(PROGRAM)
+benchmark:
 	@$(MAKE) --no-print-directory pre-benchmark
-	@$(MAKE) $(MAKEFLAGS) --no-print-directory run-benchmark
+	@$(MAKE) --no-print-directory run-benchmark
 
 pre-benchmark:
 	@rm -rf $(OUT_DIR)/* $(ERR_DIR)/*
 
-run-benchmark:	$(SCORE_FILE)
+run-benchmark:	$(PROGRAM) $(OUT_FILES)
 
 compare-score:	$(SCORE_FILE)
 	@[ -f $(OLD_SCORE_FILE) ] && bash bin/diff-score.bash $(OLD_SCORE_FILE) $(SCORE_FILE)
 
-$(SCORE_FILE):	$(OUT_FILES)
+$(SCORE_FILE):
 	@echo 'seed,score,real,user,sys,' >$@
 	@echo $(ERR_FILES) | tr ' ' "\n" | sort \
 		| xargs -n1 -I{} sh -c '\
