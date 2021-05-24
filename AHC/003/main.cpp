@@ -22,8 +22,23 @@ inline bool operator<(const Vertex& lhs, const Vertex& rhs) {
 }
 inline bool operator==(const Vertex& lhs, const Vertex& rhs) { return !(lhs<rhs) && !(rhs<lhs); }
 inline bool operator!=(const Vertex& lhs, const Vertex& rhs) { return !(lhs==rhs); }
+inline bool operator>(const Vertex& lhs, const Vertex& rhs) { return !(lhs<rhs) && lhs!=rhs; }
 
 using Path = std::vector<Vertex>;
+inline bool operator<(const Path& lhs, const Path& rhs) {
+    for (size_t i = 0; i < lhs.size(); ++i) {
+        if (i < rhs.size()) {
+            if (lhs[i] < rhs[i]) {
+                return true;
+            } else if (lhs[i] > rhs[i]) {
+                return false;
+            }
+        } else {
+            return true;
+        }
+    }
+    return false;
+}
 
 enum Direction {
     Down,
@@ -108,6 +123,19 @@ struct PossibleLength {
     inline operator int() const { return getMedium(); }
 };
 inline bool operator<(const PossibleLength& lhs, const PossibleLength& rhs) { return lhs < rhs; }
+
+inline std::ostream& operator<<(std::ostream& stream, const Vertex& v) {
+    return stream << '(' << v.i << ',' << v.j << ')';
+}
+
+std::ostream& operator<<(std::ostream& stream, const Path& p) {
+    bool delim = false;
+    for (auto&& v : p) {
+        stream << (delim ? "-" : "") << v;
+        delim |= true;
+    }
+    return stream;
+}
 
 vvi Q(H, vi(W));
 std::map<Edge, PossibleLength> distance;
@@ -243,10 +271,27 @@ int main() {
                         distance[*e] = distancePerEdge;
                     }
                 } else {
-                    std::cerr << "Calculated length is " << (length - unknownLength) / 0.9 << ", but judge said " << length << std::endl;
+                    //std::cerr << "Calculated length is " << (length - unknownLength) / 0.9 << ", but judge said " << length << '\n';
+                    int distancePerEdge = length / (path.size() - 1);
+                    std::set<Path> affectedPathes;
+                    std::unique_ptr<Vertex> prev;
+                    for (auto&& v : path) {
+                        if (prev) {
+                            auto&& e = getEdge(*prev, v);
+                            distance[e] = distancePerEdge;
+                            for (auto&& p : pathesSelectedEdge[e]) {
+                                affectedPathes.insert(*p);
+                            }
+                        }
+                        prev = std::make_unique<Vertex>(v);
+                    }
+                    // std::cerr << "Affected pathes:\n";
+                    // for (auto&& p : affectedPathes) {
+                    //     std::cerr << "* " << p << '\n';
+                    // }
                 }
             } else {
-                std::cerr << "All edges are used." << std::endl;
+                // std::cerr << "All edges are used.\n";
             }
         }
     }
