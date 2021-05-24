@@ -41,7 +41,7 @@ benchmark:	$(PROGRAM)
 	@$(MAKE) $(MAKEFLAGS) --no-print-directory run-benchmark
 
 pre-benchmark:
-	@rm -rf $(OUT_DIR) $(ERR_DIR)
+	@rm -rf $(OUT_DIR)/* $(ERR_DIR)/*
 
 run-benchmark:	$(SCORE_FILE)
 
