@@ -46,11 +46,7 @@ pre-benchmark:
 run-benchmark:	$(SCORE_FILE)
 
 compare-score:	$(SCORE_FILE)
-	@[ -f $(OLD_SCORE_FILE) ] && sdiff -s $(OLD_SCORE_FILE) $(SCORE_FILE) | tee | \
-		xargs -n1 -I{} sh -c '\
-			echo "{}" | grep -oe "^[^,]\+" | sed "s/$$/: /" | tr -d "\n";\
-			echo "{}" | sed "s/^[^,]\+,\([^,]\+\)[^|]*|[^,]\+,\([^,]\+\).*/\1 - \2/" | bc;\
-			' || echo "not found old score file: $(OLD_SCORE_FILE)"
+	@[ -f $(OLD_SCORE_FILE) ] && bash bin/diff-score.bash $(OLD_SCORE_FILE) $(SCORE_FILE)
 
 $(SCORE_FILE):	$(OUT_FILES)
 	@echo 'seed,score,real,user,sys,' >$@
