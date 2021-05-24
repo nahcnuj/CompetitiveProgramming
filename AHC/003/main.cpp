@@ -75,15 +75,35 @@ struct PossibleLength {
     PossibleLength() : PossibleLength(MEDIUM, DEFAULT_DELTA) {}
     PossibleLength(int medium) : PossibleLength(medium, DEFAULT_DELTA) {}
     PossibleLength(int medium, int delta) : shortest(medium - delta), longest(medium + delta) {
-        assert(medium > 0);
-        if (shortest < MIN) {
-            longest -= MIN - shortest;
-            shortest = MIN;
+        this->clamp();
+    }
+
+    inline void clamp() {
+        if (this->shortest > this->longest) {
+            std::swap(this->shortest, this->longest);
         }
-        if (longest > MAX) {
-            shortest += longest - MAX;
-            longest = MAX;
+        if (this->shortest < MIN) {
+            this->longest -= MIN - this->shortest;
+            this->shortest = MIN;
         }
+        if (this->longest > MAX) {
+            this->shortest += this->longest - MAX;
+            this->longest = MAX;
+        }
+        if (this->shortest > MAX) {
+            this->shortest = this->longest = MAX;
+        }
+        if (this->longest < MIN) {
+            this->shortest = this->longest = MIN;
+        }
+    }
+
+    PossibleLength operator=(int medium) {
+        int delta = (this->longest - this->shortest) / 2;
+        this->shortest = medium - delta;
+        this->longest = medium + delta;
+        this->clamp();
+        return *this;
     }
 
     inline int getMedium() const { return (shortest + longest)/2; }
@@ -222,7 +242,7 @@ int main() {
                     int length = unknownLength / edgesUsedFirst.size();
                     for (auto&& e : edgesUsedFirst) {
                         const int threshold = 1000;
-                        distance[*e] = PossibleLength(length);
+                        distance[*e] = length;
                     }
                 }
             } else {
@@ -232,7 +252,7 @@ int main() {
                     if (prev) {
                         auto&& e = getEdge(*prev, v);
                         assert(e);
-                        distance[e] = PossibleLength(distancePerEdge);
+                        distance[e] = distancePerEdge;
                     }
                     prev = std::make_unique<Vertex>(v);
                 }
