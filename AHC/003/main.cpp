@@ -236,25 +236,17 @@ int main() {
                     prev = std::make_unique<Vertex>(v);
                 }
             }
-            if (unknownLength >= 0) {
-                if (!edgesUsedFirst.empty()) {
-                    int length = unknownLength / edgesUsedFirst.size();
+            if (!edgesUsedFirst.empty()) {
+                if (unknownLength >= 0 || (unknownLength = 0.1 * length + 0.9 * unknownLength) >= 0) {
+                    int distancePerEdge = unknownLength / edgesUsedFirst.size();
                     for (auto&& e : edgesUsedFirst) {
-                        const int threshold = 1000;
-                        distance[*e] = length;
+                        distance[*e] = distancePerEdge;
                     }
+                } else {
+                    std::cerr << "Calculated length is " << (length - unknownLength) / 0.9 << ", but judge said " << length << std::endl;
                 }
             } else {
-                int distancePerEdge = length / (path.size()-1);
-                std::unique_ptr<Vertex> prev;
-                for (auto&& v : path) {
-                    if (prev) {
-                        auto&& e = getEdge(*prev, v);
-                        assert(e);
-                        distance[e] = distancePerEdge;
-                    }
-                    prev = std::make_unique<Vertex>(v);
-                }
+                std::cerr << "All edges are used." << std::endl;
             }
         }
     }
