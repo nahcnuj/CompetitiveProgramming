@@ -335,15 +335,16 @@ struct Game {
     }
 
     Action select_next_action() {
-        // search best place for a new machine
         sum_future_veges.assign(N, std::vector<int>(N, 0));
+        evaluation_cache.clear();
+
+        // search best place for a new machine
         for (int i = day; i < T; i++) {
             for (const Vegetable& vege : veges_start[i]) {
                 sum_future_veges[vege.r][vege.c] += vege.v;
             }
         }
 
-        evaluation_cache.clear();
         static auto comp = [this](const Action& lhs, const Action& rhs) { return evaluate_action(lhs) < evaluate_action(rhs); };
         std::priority_queue<Action, std::vector<Action>, decltype(comp)> candidates(comp);
         candidates.emplace(Action::pass());
@@ -359,7 +360,7 @@ struct Game {
             }
         }
 
-        auto selected = candidates.top();
+        auto action = candidates.top();
 
 #ifndef ONLINE_JUDGE
         int i = 0;
@@ -374,7 +375,7 @@ struct Game {
         }
 #endif
 
-        return selected;
+        return action;
     }
 
 private:
