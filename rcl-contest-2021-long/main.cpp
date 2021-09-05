@@ -49,13 +49,13 @@ public:
         return Action({r1, c1, r2, c2});
     }
 
-    explicit operator unsigned long long() const {
+    explicit operator unsigned int() const {
         if (vs.size() == 1) {
             return -1;
         }
-        unsigned long long hash = 0;
+        unsigned int hash = 0;
         for (size_t i = 0; i < vs.size(); i++) {
-            hash |= (vs[i] & 0xFF) << (i*8);
+            hash |= (vs[i] & 0xF) << (i*4);
         }
         return hash;
     }
@@ -236,10 +236,10 @@ struct Game {
 
 private:
     std::vector<std::vector<int>> sum_future_veges;
-    std::map<unsigned long long, int> evaluation_cache;
+    std::map<unsigned int, int> evaluation_cache;
 
     int evaluate_action(const Action& action) {
-        unsigned long long hash = static_cast<unsigned long long>(action) | (static_cast<unsigned long long>(day) << 32);
+        auto hash = static_cast<unsigned int>(action) | (static_cast<unsigned int>(day) << 16);
         if (auto itr = evaluation_cache.find(hash); itr != evaluation_cache.end()) {
             return itr->second;
         }
