@@ -406,7 +406,7 @@ private:
             switch (vs.size()) {
                 case 1:  return 1;
                 case 2:  return sum_future_veges[vs[0]][vs[1]];
-                case 4:  return sum_future_veges[vs[2]][vs[3]];
+                case 4:  return sum_future_veges[vs[2]][vs[3]] - sum_future_veges[vs[0]][vs[1]];
                 default: abort();
             }
         }(action.vs);
