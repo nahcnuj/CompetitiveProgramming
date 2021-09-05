@@ -349,14 +349,29 @@ struct Game {
         std::priority_queue<Action, std::vector<Action>, decltype(comp)> candidates(comp);
         candidates.emplace(Action::pass());
 
-        if (can_buy_machine()) {
-            for (int r = 0; r < N; r++) {
-                for (int c = 0; c < N; c++) {
-                    if (has_machine[r][c]) {
-                        continue;
+        std::vector<std::pair<int, int>> machines;
+        std::vector<std::pair<int, int>> movable;
+        for (int r = 0; r < N; r++) {
+            for (int c = 0; c < N; c++) {
+                if (has_machine[r][c]) {
+                    machines.emplace_back(r, c);
+                } else {
+                    if (vege_values[r][c] > 0) {
+                        movable.emplace_back(r, c);
                     }
-                    candidates.emplace(Action::purchase(r, c));
                 }
+            }
+        }
+
+        if (can_buy_machine()) {
+            for (auto&& to : movable) {
+                candidates.emplace(Action::purchase(to.first, to.second));
+            }
+        }
+
+        for (auto&& m : machines) {
+            for (auto&& to : movable) {
+                candidates.emplace(Action::move(m.first, m.second, to.first, to.second));
             }
         }
 
