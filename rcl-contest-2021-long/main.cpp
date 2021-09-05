@@ -73,20 +73,18 @@ std::vector<std::vector<Vegetable>> veges_end;   // veges_end[i] : vegetables di
 
 struct Game {
     static int N, M, T;
-    std::vector<std::vector<int>> has_machine;
-    std::vector<std::vector<int>> vege_values;
     int day;
     int num_machine;
     int money;
+    std::vector<bool> has_machine;
+    std::vector<std::vector<int>> vege_values;
 
-    Game() : day(0), num_machine(0), money(1) {
-        has_machine.assign(N, std::vector<int>(N, 0));
+    Game() : day(0), num_machine(0), money(1), has_machine(N*N) {
         vege_values.assign(N, std::vector<int>(N, 0));
         appear_veges();
     }
 
-    Game(const Game& game) : day(game.day), num_machine(game.num_machine), money(game.money) {
-        std::copy(game.has_machine.begin(), game.has_machine.end(), std::back_inserter(has_machine));
+    Game(const Game& game) : day(game.day), num_machine(game.num_machine), money(game.money), has_machine(game.has_machine) {
         std::copy(game.vege_values.begin(), game.vege_values.end(), std::back_inserter(vege_values));
     }
 
@@ -111,17 +109,16 @@ struct Game {
     }
 
     void purchase(int r, int c) {
-        assert(!has_machine[r][c]);
+        assert(!has_machine[r * N + c]);
         assert(can_buy_machine());
-        has_machine[r][c] = 1;
+        has_machine[r * N + c] = true;
         money -= get_next_machine_price();
         num_machine++;
     }
 
     void move(int r1, int c1, int r2, int c2) {
-        assert(has_machine[r1][c1] && !has_machine[r2][c2]);
-        has_machine[r1][c1] = 0;
-        has_machine[r2][c2] = 1;
+        assert(has_machine[r1 * N + c1] && !has_machine[r2 * N + c2]);
+        std::swap(has_machine[r1 * N + c1], has_machine[r2 * N + c2]);
     }
 
     void apply(const Action& action) {
@@ -135,7 +132,7 @@ struct Game {
     void harvest() {
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
-                if (has_machine[i][j] && vege_values[i][j] > 0) {
+                if (has_machine[i * N + j] && vege_values[i][j] > 0) {
                     money += vege_values[i][j] * count_connected_machines(i, j);
                     vege_values[i][j] = 0;
                 }
@@ -169,7 +166,7 @@ struct Game {
             for (int dir = 0; dir < 4; dir++) {
                 int nr = cr + DR[dir];
                 int nc = cc + DC[dir];
-                if (0 <= nr && nr < N && 0 <= nc && nc < N && has_machine[nr][nc] && !visited[nr][nc]) {
+                if (0 <= nr && nr < N && 0 <= nc && nc < N && has_machine[nr * N + nc] && !visited[nr][nc]) {
                     visited[nr][nc] = 1;
                     connected_machines.emplace_back(nr, nc);
                 }
@@ -197,7 +194,7 @@ struct Game {
         std::vector<std::pair<int, int>> movable;
         for (int r = 0; r < N; r++) {
             for (int c = 0; c < N; c++) {
-                if (has_machine[r][c]) {
+                if (has_machine[r * N + c]) {
                     machines.emplace_back(r, c);
                 } else {
                     if (vege_values[r][c] > 0) {
