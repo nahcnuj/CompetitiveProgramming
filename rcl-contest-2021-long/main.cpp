@@ -252,25 +252,25 @@ struct Game {
     }
 
     int simulate(int day, const Action& action) {
-        auto copiedGame = *this;
-        copiedGame.proceed(day, action);
-        return copiedGame.money;
+        auto copied_game = *this;
+        copied_game.proceed(day, action);
+        return copied_game.money;
     }
 
     int count_connected_machines(int r, int c) {
-        std::vector<std::pair<int, int>> queue = {{r, c}};
+        std::vector<std::pair<int, int>> connected_machines = {{r, c}};
         std::vector<std::vector<int>> visited(N, std::vector<int>(N, 0));
         visited[r][c] = 1;
         size_t i = 0;
-        while (i < queue.size()) {
-            int cr = queue[i].first;
-            int cc = queue[i].second;
+        while (i < connected_machines.size()) {
+            int cr = connected_machines[i].first;
+            int cc = connected_machines[i].second;
             for (int dir = 0; dir < 4; dir++) {
                 int nr = cr + DR[dir];
                 int nc = cc + DC[dir];
                 if (0 <= nr && nr < N && 0 <= nc && nc < N && has_machine[nr][nc] && !visited[nr][nc]) {
                     visited[nr][nc] = 1;
-                    queue.push_back({nr, nc});
+                    connected_machines.push_back({nr, nc});
                 }
             }
             i++;
