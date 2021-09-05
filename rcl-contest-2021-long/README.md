@@ -1,8 +1,10 @@
 # RECRUIT 日本橋ハーフマラソン 2021 〜増刊号〜 ― 農場王 X
 
-## Basic Strategy
+## Strategy
 
+### Basic
 
+Select an action based on the sum of money earned as a result of the action and earned in the future.
 
 ## Usage
 
@@ -16,7 +18,7 @@ unzip -nj /tmp/tools.zip -d tools
 | Command | Description |
 |----|----|
 | `make compile` | Compile `main.cpp` |
-| `make test` | Execute `a.out` for an input file in `./tools/in/` (unless `TEST_IN` is specifed) |
+| `make test` | Execute `a.out` for an input file of `./tools/input_*.txt` (unless `TEST_IN` is specifed) |
 | `make bench` | Execute `a.out` for all input files and summarize scores and execution times |
 | `make compare-score` | Compare score file `./score.csv` with old one `./_score.csv` (unless `OLD_SCORE_FILE` is specified) |
 
