@@ -6,20 +6,18 @@ OBJS    = ./main.o
 PROGRAM = ./a.out
 
 .PHONY: all
-all:		compile bench compare-score
+all:		compare-score
 
 .PHONY: compile
 compile:	$(PROGRAM)
+	@echo "Compile done."
 
 $(PROGRAM):	$(OBJS)
 	@$(CC) $(OBJS) $(CFLAGS) $(LDFLAGS) $(LIBS) -o $(PROGRAM)
 
 %.o:		%.cpp
+	@echo Compiling...
 	@$(CC) $(CFLAGS) -c -o $@ $<
-
-.PHONY: clean
-clean:
-	@rm -rfv *.o *~ $(PROGRAM)
 
 
 TOOL_DIR = ./tools
@@ -41,14 +39,7 @@ SCORE_FILE     = ./scores.csv
 OLD_SCORE_FILE = ./_scores.csv
 
 .PHONY: bench
-bench:
-	@$(MAKE) --no-print-directory pre-bench
-	@$(MAKE) --no-print-directory run-bench
-
-pre-bench:
-	@rm -rf $(OUT_DIR)/* $(ERR_DIR)/*
-
-run-bench:	$(PROGRAM) $(OUT_FILES)
+bench:	$(SCORE_FILE)
 
 compare-score:	$(SCORE_FILE)
 	@if [ -f $(OLD_SCORE_FILE) ]; then\
@@ -56,7 +47,7 @@ compare-score:	$(SCORE_FILE)
 	fi
 
 SCORE_CALCULATOR_BIN = python3 $(TOOL_DIR)/judge.py
-$(SCORE_FILE):	$(ERR_FILES)
+$(SCORE_FILE):	$(OUT_FILES)
 	@echo 'seed,score,real,user,sys,' >$@
 	@for err_file in $$(echo "$(ERR_FILES)" | tr " " "\n" | sort | tr "\n" " "); do \
 		basename="$$(basename $$err_file)" ; \
@@ -77,7 +68,13 @@ $(SCORE_FILE):	$(ERR_FILES)
 	done
 
 $(OUT_DIR)/%.txt:	$(IN_DIR)/input_%.txt $(PROGRAM) $(OUT_DIR) $(ERR_DIR)
-	@time -p $(PROGRAM) <$< >$@ 2>$(ERR_DIR)/$$(basename $@)
+	@echo $*
+	@time -p $(PROGRAM) <$< >$@ 2>$(ERR_DIR)/$(notdir $@)
 
 $(OUT_DIR) $(ERR_DIR):
 	@mkdir -p $@
+
+
+.PHONY: clean
+clean:
+	@rm -rf *.o *~ $(OUT_DIR)/* $(ERR_DIR)/*
