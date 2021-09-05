@@ -204,6 +204,11 @@ struct Game {
         vege_values.assign(N, std::vector<int>(N, 0));
     }
 
+    Game(const Game& game) : num_machine(game.num_machine), next_price(game.next_price), money(game.money) {
+        std::copy(game.has_machine.begin(), game.has_machine.end(), std::back_inserter(has_machine));
+        std::copy(game.vege_values.begin(), game.vege_values.end(), std::back_inserter(vege_values));
+    }
+
     void purchase(int r, int c) {
         assert(!has_machine[r][c]);
         assert(next_price <= money);
@@ -220,7 +225,7 @@ struct Game {
         has_machine[r2][c2] = 1;
     }
 
-    void simulate(int day, const Action& action) {
+    void proceed(int day, const Action& action) {
         // apply
         if (action.vs.size() == 2) {
             purchase(action.vs[0], action.vs[1]);
@@ -244,6 +249,12 @@ struct Game {
         for (const Vegetable& vege : veges_end[day]) {
             vege_values[vege.r][vege.c] = 0;
         }
+    }
+
+    int simulate(int day, const Action& action) {
+        auto copiedGame = *this;
+        copiedGame.proceed(day, action);
+        return copiedGame.money;
     }
 
     int count_connected_machines(int r, int c) {
@@ -320,7 +331,7 @@ int main() {
     for (int day = 0; day < T; day++) {
         Action action = game.select_next_action(day);
         actions.push_back(action);
-        game.simulate(day, action);
+        game.proceed(day, action);
     }
     for (const Action& action : actions) {
         for (size_t i = 0; i < action.vs.size(); i++) {
