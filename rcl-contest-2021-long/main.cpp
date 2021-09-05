@@ -186,7 +186,14 @@ public:
     static Action move(int r1, int c1, int r2, int c2) {
         return Action({r1, c1, r2, c2});
     }
+
+    friend std::ostream& operator<<(std::ostream& os, const Action& action);
 };
+
+std::ostream& operator<<(std::ostream& os, const Action& action) {
+    std::copy(action.vs.cbegin(), action.vs.cend(), std::ostream_iterator<const decltype(action.vs)::value_type&>(os, " "));
+    return os;
+}
 
 int N, M, T;
 std::vector<std::vector<Vegetable>> veges_start; // veges_start[i] : vegetables appear on day i
@@ -326,17 +333,12 @@ int main() {
         veges_start[s].push_back(vege);
         veges_end[e].push_back(vege);
     }
+
     Game game;
-    std::vector<Action> actions;
     for (int day = 0; day < T; day++) {
         Action action = game.select_next_action(day);
-        actions.push_back(action);
         game.proceed(day, action);
-    }
-    for (const Action& action : actions) {
-        for (size_t i = 0; i < action.vs.size(); i++) {
-            std::cout << action.vs[i] << (i == action.vs.size() - 1 ? "\n" : " ");
-        }
+        std::cout << action << "\n";
     }
 }
 

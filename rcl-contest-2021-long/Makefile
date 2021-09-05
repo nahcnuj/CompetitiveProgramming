@@ -30,7 +30,7 @@ TEST_IN  = $(firstword $(IN_FILES))
 
 .PHONY: test
 test:	$(PROGRAM)
-	time -p $(PROGRAM) <$(TEST_IN) >out.txt
+	time -p $(PROGRAM) <$(TEST_IN)
 
 
 OUT_DIR        = ./out
