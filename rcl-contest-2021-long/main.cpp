@@ -68,11 +68,11 @@ std::ostream& operator<<(std::ostream& os, const Action& action) {
     return os;
 }
 
-int N, M, T;
 std::vector<std::vector<Vegetable>> veges_start; // veges_start[i] : vegetables appear on day i
 std::vector<std::vector<Vegetable>> veges_end;   // veges_end[i] : vegetables disappear on day i
 
 struct Game {
+    static int N, M, T;
     std::vector<std::vector<int>> has_machine;
     std::vector<std::vector<int>> vege_values;
     int day;
@@ -259,12 +259,13 @@ private:
         return evaluation;
     }
 };
+int Game::N, Game::M, Game::T;
 
 int main() {
-    std::cin >> N >> M >> T;
-    veges_start.resize(T);
-    veges_end.resize(T);
-    for (int i = 0; i < M; i++) {
+    std::cin >> Game::N >> Game::M >> Game::T;
+    veges_start.resize(Game::T);
+    veges_end.resize(Game::T);
+    for (int i = 0; i < Game::M; i++) {
         int r, c, s, e, v;
         std::cin >> r >> c >> s >> e >> v;
         Vegetable vege(r, c, s, e, v);
@@ -273,7 +274,7 @@ int main() {
     }
 
     Game game;
-    for (int day = 0; day < T; day++) {
+    for (int day = 0; day < Game::T; day++) {
 #ifndef ONLINE_JUDGE
         std::cerr << "Day: " << day << " ===============================\n";
 #endif
