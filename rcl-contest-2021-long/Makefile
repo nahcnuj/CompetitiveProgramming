@@ -2,6 +2,7 @@ CC      = g++
 CFLAGS  = -std=gnu++17 -Wall -Wextra -Wno-unknown-pragmas -O2 -I/opt/boost/gcc/include -I/opt/ac-library
 LDFLAGS = -L/opt/boost/gcc/lib
 LIBS    =
+DEBUG   =
 OBJS    = ./main.o
 PROGRAM = ./a.out
 
@@ -17,7 +18,7 @@ $(PROGRAM):	$(OBJS)
 
 %.o:		%.cpp
 	@echo Compiling...
-	@$(CC) $(CFLAGS) -c -o $@ $<
+	@$(CC) $(CFLAGS) $(DEBUG) -c -o $@ $<
 
 
 TOOL_DIR = ./tools
