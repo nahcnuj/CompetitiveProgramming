@@ -49,16 +49,17 @@ public:
         return Action({r1, c1, r2, c2});
     }
 
-    explicit operator unsigned int() const {
+    explicit operator unsigned() const {
         if (vs.size() == 1) {
             return -1;
         }
-        unsigned int hash = 0;
+        unsigned hash = 0;
         for (size_t i = 0; i < vs.size(); i++) {
             hash |= (vs[i] & 0xF) << (i*4);
         }
         return hash;
     }
+
     friend std::ostream& operator<<(std::ostream& os, const Action& action);
 };
 
@@ -157,6 +158,7 @@ struct Game {
         if (++day < T) {
             appear_veges();
         }
+        evaluation_cache.clear();
     }
 
     int simulate(const Action& action) const {
@@ -246,10 +248,10 @@ struct Game {
 
 private:
     std::vector<std::vector<int>> sum_future_veges;
-    std::map<unsigned int, int> evaluation_cache;
+    std::map<unsigned, int> evaluation_cache;
 
     int evaluate_action(const Action& action) {
-        auto hash = static_cast<unsigned int>(action) | (static_cast<unsigned int>(day) << 16);
+        auto hash = static_cast<unsigned>(action) | (static_cast<unsigned>(day) << 16);
         if (auto itr = evaluation_cache.find(hash); itr != evaluation_cache.end()) {
             return itr->second;
         }
