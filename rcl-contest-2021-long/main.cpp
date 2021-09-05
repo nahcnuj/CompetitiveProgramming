@@ -77,15 +77,25 @@ struct Game {
     int num_machine;
     int money;
     std::vector<bool> has_machine;
-    std::vector<std::vector<int>> vege_values;
+    std::vector<int> vege_values;
 
-    Game() : day(0), num_machine(0), money(1), has_machine(N*N) {
-        vege_values.assign(N, std::vector<int>(N, 0));
+    Game() :
+        day(0),
+        num_machine(0),
+        money(1),
+        has_machine(N*N),
+        vege_values(N*N, 0)
+    {
         appear_veges();
     }
 
-    Game(const Game& game) : day(game.day), num_machine(game.num_machine), money(game.money), has_machine(game.has_machine) {
-        std::copy(game.vege_values.begin(), game.vege_values.end(), std::back_inserter(vege_values));
+    Game(const Game& game) :
+        day(game.day),
+        num_machine(game.num_machine),
+        money(game.money),
+        has_machine(game.has_machine),
+        vege_values(game.vege_values)
+    {
     }
 
     inline int get_next_machine_price() const {
@@ -98,13 +108,13 @@ struct Game {
 
     void appear_veges() {
         for (const Vegetable& vege : veges_start[day]) {
-            vege_values[vege.r][vege.c] = vege.v;
+            vege_values[vege.r * N + vege.c] = vege.v;
         }
     }
 
     void disappear_veges() {
         for (const Vegetable& vege : veges_end[day]) {
-            vege_values[vege.r][vege.c] = 0;
+            vege_values[vege.r * N + vege.c] = 0;
         }
     }
 
@@ -132,9 +142,9 @@ struct Game {
     void harvest() {
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
-                if (has_machine[i * N + j] && vege_values[i][j] > 0) {
-                    money += vege_values[i][j] * count_connected_machines(i, j);
-                    vege_values[i][j] = 0;
+                if (has_machine[i * N + j] && vege_values[i * N + j] > 0) {
+                    money += vege_values[i * N + j] * count_connected_machines(i, j);
+                    vege_values[i * N + j] = 0;
                 }
             }
         }
@@ -197,7 +207,7 @@ struct Game {
                 if (has_machine[r * N + c]) {
                     machines.emplace_back(r, c);
                 } else {
-                    if (vege_values[r][c] > 0) {
+                    if (vege_values[r * N + c] > 0) {
                         movable.emplace_back(r, c);
                     }
                 }
