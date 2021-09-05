@@ -262,7 +262,7 @@ private:
                     }); itr == last_chances.end()) {
                         return 0;
                     };
-                    return sum_future_veges[vs[2]][vs[3]] * count_connected_machines(vs[2], vs[3]) - sum_future_veges[vs[0]][vs[1]] * count_connected_machines(vs[0], vs[1]);
+                    return sum_future_veges[vs[2]][vs[3]] * count_connected_machines(vs[2], vs[3]) - sum_future_veges[vs[0]][vs[1]] * (count_connected_machines(vs[0], vs[1]) - 1);
                 default: abort();
             }
         }(action.vs);
