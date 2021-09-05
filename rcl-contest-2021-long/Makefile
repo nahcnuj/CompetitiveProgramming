@@ -58,7 +58,7 @@ compare-score:	$(SCORE_FILE)
 SCORE_CALCULATOR_BIN = python3 $(TOOL_DIR)/judge.py
 $(SCORE_FILE):	$(ERR_FILES)
 	@echo 'seed,score,real,user,sys,' >$@
-	@for err_file in $(ERR_FILES); do \
+	@for err_file in $$(echo "$(ERR_FILES)" | tr " " "\n" | sort | tr "\n" " "); do \
 		basename="$$(basename $$err_file)" ; \
 		\
 		sed -i "s|Score = .*||g" $$err_file ; \
