@@ -10,10 +10,10 @@ all:		compare-score
 
 .PHONY: compile
 compile:	$(PROGRAM)
-	@echo "Compile done."
 
 $(PROGRAM):	$(OBJS)
 	@$(CC) $(OBJS) $(CFLAGS) $(LDFLAGS) $(LIBS) -o $(PROGRAM)
+	@echo "Compile done."
 
 %.o:		%.cpp
 	@echo Compiling...
