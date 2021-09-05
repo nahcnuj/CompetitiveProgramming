@@ -251,13 +251,13 @@ struct Game {
         }
     }
 
-    int simulate(int day, const Action& action) {
+    int simulate(int day, const Action& action) const {
         auto copied_game = *this;
         copied_game.proceed(day, action);
         return copied_game.money;
     }
 
-    int count_connected_machines(int r, int c) {
+    int count_connected_machines(int r, int c) const {
         std::vector<std::pair<int, int>> connected_machines = {{r, c}};
         std::vector<std::vector<int>> visited(N, std::vector<int>(N, 0));
         visited[r][c] = 1;
@@ -278,7 +278,7 @@ struct Game {
         return i;
     }
 
-    Action select_next_action(int day) {
+    Action select_next_action(int day) const {
         // implement your strategy here
 
         if (money < next_price) {
