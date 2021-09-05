@@ -403,12 +403,23 @@ private:
             return itr->second;
         }
         auto evaluation = [this](auto&& vs) -> int {
+            auto&& last_chances = veges_end[day];
             switch (vs.size()) {
                 case 1:
                     return 1;
                 case 2:
+                    if (auto itr = std::find_if(last_chances.begin(), last_chances.end(), [&vs](auto vege) {
+                        return vege.r == vs[0] && vege.c == vs[1];
+                    }); itr == last_chances.end()) {
+                        return 0;
+                    };
                     return sum_future_veges[vs[0]][vs[1]] * count_connected_machines(vs[0], vs[1]);
                 case 4:
+                    if (auto itr = std::find_if(last_chances.begin(), last_chances.end(), [&vs](auto vege) {
+                        return vege.r == vs[2] && vege.c == vs[3];
+                    }); itr == last_chances.end()) {
+                        return 0;
+                    };
                     return sum_future_veges[vs[2]][vs[3]] * count_connected_machines(vs[2], vs[3]) - sum_future_veges[vs[0]][vs[1]] * count_connected_machines(vs[0], vs[1]);
                 default: abort();
             }
