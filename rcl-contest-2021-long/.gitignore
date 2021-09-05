@@ -1,0 +1,9 @@
+.vscode/
+tools/
+
+err/
+out/
+a.out
+*.o
+
+*scores.csv
