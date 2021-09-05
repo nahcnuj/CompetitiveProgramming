@@ -222,15 +222,16 @@ std::vector<std::vector<Vegetable>> veges_end;   // veges_end[i] : vegetables di
 struct Game {
     std::vector<std::vector<int>> has_machine;
     std::vector<std::vector<int>> vege_values;
+    int day;
     int num_machine;
     int money;
 
-    Game() : num_machine(0), money(1) {
+    Game() : day(0), num_machine(0), money(1) {
         has_machine.assign(N, std::vector<int>(N, 0));
         vege_values.assign(N, std::vector<int>(N, 0));
     }
 
-    Game(const Game& game) : num_machine(game.num_machine), money(game.money) {
+    Game(const Game& game) : day(game.day), num_machine(game.num_machine), money(game.money) {
         std::copy(game.has_machine.begin(), game.has_machine.end(), std::back_inserter(has_machine));
         std::copy(game.vege_values.begin(), game.vege_values.end(), std::back_inserter(vege_values));
     }
@@ -257,7 +258,7 @@ struct Game {
         has_machine[r2][c2] = 1;
     }
 
-    void proceed(int day, const Action& action) {
+    void proceed(const Action& action) {
         // apply
         if (action.vs.size() == 2) {
             purchase(action.vs[0], action.vs[1]);
@@ -281,11 +282,13 @@ struct Game {
         for (const Vegetable& vege : veges_end[day]) {
             vege_values[vege.r][vege.c] = 0;
         }
+
+        day++;
     }
 
-    int simulate(int day, const Action& action) const {
+    int simulate(const Action& action) const {
         auto copied_game = *this;
-        copied_game.proceed(day, action);
+        copied_game.proceed(action);
         return copied_game.money;
     }
 
@@ -310,7 +313,7 @@ struct Game {
         return i;
     }
 
-    Action select_next_action(int day) const {
+    Action select_next_action() const {
         // implement your strategy here
 
         if (!can_buy_machine()) {
@@ -361,8 +364,8 @@ int main() {
 
     Game game;
     for (int day = 0; day < T; day++) {
-        Action action = game.select_next_action(day);
-        game.proceed(day, action);
+        Action action = game.select_next_action();
+        game.proceed(action);
         std::cout << action << "\n";
     }
 }
