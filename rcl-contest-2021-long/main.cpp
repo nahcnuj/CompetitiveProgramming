@@ -84,7 +84,7 @@ struct Game {
         num_machine(0),
         money(1),
         has_machine(N*N),
-        vege_values(N*N, 0)
+        vege_values(N*N)
     {
         appear_veges();
     }
@@ -167,23 +167,23 @@ struct Game {
 
     int count_connected_machines(int r, int c) const {
         std::vector<std::pair<int, int>> connected_machines = {{r, c}};
-        std::vector<std::vector<int>> visited(N, std::vector<int>(N, 0));
-        visited[r][c] = 1;
-        size_t i = 0;
-        while (i < connected_machines.size()) {
-            int cr = connected_machines[i].first;
-            int cc = connected_machines[i].second;
+        std::vector<bool> visited(N*N);
+        visited[r * N + c] = true;
+        size_t count = 0;
+        while (count < connected_machines.size()) {
+            int cr = connected_machines[count].first;
+            int cc = connected_machines[count].second;
             for (int dir = 0; dir < 4; dir++) {
                 int nr = cr + DR[dir];
                 int nc = cc + DC[dir];
-                if (0 <= nr && nr < N && 0 <= nc && nc < N && has_machine[nr * N + nc] && !visited[nr][nc]) {
-                    visited[nr][nc] = 1;
+                if (0 <= nr && nr < N && 0 <= nc && nc < N && has_machine[nr * N + nc] && !visited[nr * N + nc]) {
+                    visited[nr * N + nc] = true;
                     connected_machines.emplace_back(nr, nc);
                 }
             }
-            i++;
+            count++;
         }
-        return i;
+        return count;
     }
 
     Action select_next_action() {
