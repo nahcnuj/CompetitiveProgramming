@@ -207,11 +207,22 @@ public:
         return Action({r1, c1, r2, c2});
     }
 
+    explicit operator unsigned int() const {
+        if (vs.size() == 1) {
+            return -1;
+        }
+        unsigned int hash = 0;
+        for (size_t i = 0; i < vs.size(); i++) {
+            hash |= (vs[i] & 0xFF) << (i*8);
+        }
+        return hash;
+    }
     friend std::ostream& operator<<(std::ostream& os, const Action& action);
 };
 
 std::ostream& operator<<(std::ostream& os, const Action& action) {
-    std::copy(action.vs.cbegin(), action.vs.cend(), std::ostream_iterator<const decltype(action.vs)::value_type&>(os, " "));
+    std::copy(action.vs.cbegin(), std::prev(action.vs.cend()), std::ostream_iterator<int>(os, " "));
+    os << *action.vs.rbegin();
     return os;
 }
 
@@ -229,6 +240,7 @@ struct Game {
     Game() : day(0), num_machine(0), money(1) {
         has_machine.assign(N, std::vector<int>(N, 0));
         vege_values.assign(N, std::vector<int>(N, 0));
+        appear_veges();
     }
 
     Game(const Game& game) : day(game.day), num_machine(game.num_machine), money(game.money) {
@@ -242,6 +254,18 @@ struct Game {
 
     inline bool can_buy_machine() const {
         return money >= get_next_machine_price();
+    }
+
+    void appear_veges() {
+        for (const Vegetable& vege : veges_start[day]) {
+            vege_values[vege.r][vege.c] = vege.v;
+        }
+    }
+
+    void disappear_veges() {
+        for (const Vegetable& vege : veges_end[day]) {
+            vege_values[vege.r][vege.c] = 0;
+        }
     }
 
     void purchase(int r, int c) {
@@ -265,10 +289,6 @@ struct Game {
         } else if (action.vs.size() == 4) {
             move(action.vs[0], action.vs[1], action.vs[2], action.vs[3]);
         }
-        // appear
-        for (const Vegetable& vege : veges_start[day]) {
-            vege_values[vege.r][vege.c] = vege.v;
-        }
         // harvest
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
@@ -278,12 +298,13 @@ struct Game {
                 }
             }
         }
-        // disappear
-        for (const Vegetable& vege : veges_end[day]) {
-            vege_values[vege.r][vege.c] = 0;
-        }
+
+        disappear_veges();
 
         day++;
+        if (day < T) {
+            appear_veges();
+        }
     }
 
     int simulate(const Action& action) const {
@@ -313,40 +334,68 @@ struct Game {
         return i;
     }
 
-    Action select_next_action() const {
-        // implement your strategy here
-
-        if (!can_buy_machine()) {
-            return Action::pass();
-        } else {
-            // search best place for a new machine
-            std::vector<std::vector<int>> sum_future_veges(N, std::vector<int>(N, 0));
-            for (int i = day; i < T; i++) {
-                for (const Vegetable& vege : veges_start[i]) {
-                    sum_future_veges[vege.r][vege.c] += vege.v;
-                }
+    Action select_next_action() {
+        // search best place for a new machine
+        sum_future_veges.assign(N, std::vector<int>(N, 0));
+        for (int i = day; i < T; i++) {
+            for (const Vegetable& vege : veges_start[i]) {
+                sum_future_veges[vege.r][vege.c] += vege.v;
             }
-            int max_sum = 0;
-            int max_r = -1;
-            int max_c = -1;
+        }
+
+        evaluation_cache.clear();
+        static auto comp = [this](const Action& lhs, const Action& rhs) { return evaluate_action(lhs) < evaluate_action(rhs); };
+        std::priority_queue<Action, std::vector<Action>, decltype(comp)> candidates(comp);
+        candidates.emplace(Action::pass());
+
+        if (can_buy_machine()) {
             for (int r = 0; r < N; r++) {
                 for (int c = 0; c < N; c++) {
                     if (has_machine[r][c]) {
                         continue;
                     }
-                    if (max_sum < sum_future_veges[r][c]) {
-                        max_sum = sum_future_veges[r][c];
-                        max_r = r;
-                        max_c = c;
-                    }
+                    candidates.emplace(Action::purchase(r, c));
                 }
             }
-            if (max_sum > 0) {
-                return Action::purchase(max_r, max_c);
-            } else {
-                return Action::pass();
+        }
+
+        auto selected = candidates.top();
+
+#ifndef ONLINE_JUDGE
+        int i = 0;
+        while (!candidates.empty()) {
+            auto cand = candidates.top();
+            candidates.pop();
+
+            std::cerr << cand << ' ' << evaluate_action(cand) << "\n";
+            if (++i >= 5) {
+                break;
             }
         }
+#endif
+
+        return selected;
+    }
+
+private:
+    std::vector<std::vector<int>> sum_future_veges;
+    std::map<unsigned int, int> evaluation_cache;
+
+    int evaluate_action(const Action& action) {
+        auto hash = static_cast<unsigned int>(action);
+        if (auto itr = evaluation_cache.find(hash); itr != evaluation_cache.end()) {
+            return itr->second;
+        }
+        auto evaluation = [this](auto&& vs) -> int {
+            switch (vs.size()) {
+                case 1:  return 1;
+                case 2:  return sum_future_veges[vs[0]][vs[1]];
+                case 4:  return sum_future_veges[vs[2]][vs[3]];
+                default: abort();
+            }
+        }(action.vs);
+        evaluation_cache.insert(std::make_pair(hash, evaluation));
+        return evaluation;
     }
 };
 
@@ -364,11 +413,11 @@ int main() {
 
     Game game;
     for (int day = 0; day < T; day++) {
+#ifndef ONLINE_JUDGE
+        std::cerr << "Day: " << day << " ===============================\n";
+#endif
         Action action = game.select_next_action();
         game.proceed(action);
         std::cout << action << "\n";
     }
 }
-
-#ifndef ONLINE_JUDGE
-#endif
