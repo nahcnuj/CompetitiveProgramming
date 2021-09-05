@@ -60,7 +60,6 @@ $(SCORE_FILE):	$(ERR_FILES)
 	@echo 'seed,score,real,user,sys,' >$@
 	@for err_file in $(ERR_FILES); do \
 		basename="$$(basename $$err_file)" ; \
-		seed="$$(echo -n $$(echo "$$basename" | sed "s|\([0-9]\+\)\.txt|\1|" ))" ; \
 		\
 		sed -i "s|Score = .*||g" $$err_file ; \
 		echo -n "Score = " >>$$err_file ; \
@@ -68,7 +67,7 @@ $(SCORE_FILE):	$(ERR_FILES)
 			| sed "s|score:||" >>$$err_file ; \
 		\
 		echo $$err_file | xargs -I{} sh -c ' \
-			echo -n "$$seed," ; \
+			echo -n "{}," | sed "s|.*/\([0-9]\+\)\.txt|\1|" ; \
 			grep -e "^Score = " {} | sed "s/^Score = \(.*\)$$/\1,/" | tr -d "\n" ; \
 			grep -e "^real " {} | sed "s/^.* \(.*\)$$/\1,/" | tr -d "\n" ; \
 			grep -e "^user " {} | sed "s/^.* \(.*\)$$/\1,/" | tr -d "\n" ; \
