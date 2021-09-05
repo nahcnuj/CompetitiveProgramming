@@ -1,5 +1,5 @@
 CC      = g++
-CFLAGS  = -std=gnu++17 -Wall -Wextra -O2 -I/opt/boost/gcc/include -I/opt/ac-library
+CFLAGS  = -std=gnu++17 -Wall -Wextra -Wno-unknown-pragmas -O2 -I/opt/boost/gcc/include -I/opt/ac-library
 LDFLAGS = -L/opt/boost/gcc/lib
 LIBS    =
 OBJS    = ./main.o
@@ -12,14 +12,14 @@ all:		compile bench compare-score
 compile:	$(PROGRAM)
 
 $(PROGRAM):	$(OBJS)
-	$(CC) $(OBJS) $(CFLAGS) $(LDFLAGS) $(LIBS) -o $(PROGRAM)
+	@$(CC) $(OBJS) $(CFLAGS) $(LDFLAGS) $(LIBS) -o $(PROGRAM)
 
 %.o:		%.cpp
-	$(CC) $(CFLAGS) -c -o $@ $<
+	@$(CC) $(CFLAGS) -c -o $@ $<
 
 .PHONY: clean
 clean:
-	rm -rf *.o *~ $(PROGRAM)
+	@rm -rfv *.o *~ $(PROGRAM)
 
 
 TOOL_DIR = ./tools
@@ -59,8 +59,8 @@ SCORE_CALCULATOR_BIN = python3 $(TOOL_DIR)/judge.py
 $(SCORE_FILE):	$(ERR_FILES)
 	@echo 'seed,score,real,user,sys,' >$@
 	@for err_file in $(ERR_FILES); do \
-		echo $$err_file ; \
 		basename="$$(basename $$err_file)" ; \
+		seed="$$(echo -n $$(echo "$$basename" | sed "s|\([0-9]\+\)\.txt|\1|" ))" ; \
 		\
 		sed -i "s|Score = .*||g" $$err_file ; \
 		echo -n "Score = " >>$$err_file ; \
@@ -68,7 +68,7 @@ $(SCORE_FILE):	$(ERR_FILES)
 			| sed "s|score:||" >>$$err_file ; \
 		\
 		echo $$err_file | xargs -I{} sh -c ' \
-			echo -n $$(echo {} | sed "s|.*/\([0-9]\+\)\.txt|\1|" ), ; \
+			echo -n "$$seed," ; \
 			grep -e "^Score = " {} | sed "s/^Score = \(.*\)$$/\1,/" | tr -d "\n" ; \
 			grep -e "^real " {} | sed "s/^.* \(.*\)$$/\1,/" | tr -d "\n" ; \
 			grep -e "^user " {} | sed "s/^.* \(.*\)$$/\1,/" | tr -d "\n" ; \
@@ -78,7 +78,7 @@ $(SCORE_FILE):	$(ERR_FILES)
 	done
 
 $(OUT_DIR)/%.txt:	$(IN_DIR)/input_%.txt $(PROGRAM) $(OUT_DIR) $(ERR_DIR)
-	time -p $(PROGRAM) <$< >$@ 2>$(ERR_DIR)/$$(basename $@)
+	@time -p $(PROGRAM) <$< >$@ 2>$(ERR_DIR)/$$(basename $@)
 
 $(OUT_DIR) $(ERR_DIR):
 	@mkdir -p $@

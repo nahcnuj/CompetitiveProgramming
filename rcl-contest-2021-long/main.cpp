@@ -134,7 +134,6 @@ auto getMovingPath(Vertex t, std::vector<std::vector<Vertex>>& prevs) {
     Path path;
     std::stringstream ss;
     auto&& p = prevs[t.i][t.j];
-    int c = 0;
     while (p) {
         if (p.i < t.i) {
             ss << 'D';
@@ -159,8 +158,6 @@ inline bool operator<(const std::_Rb_tree_iterator<std::pair<const std::vector<V
 }
 #pragma endregion
 
-using namespace std;
-
 const int DR[4] = {1, 0, -1, 0};
 const int DC[4] = {0, 1, 0, -1};
 
@@ -172,10 +169,10 @@ struct Vegetable {
 };
 
 struct Action {
-    vector<int> vs;
+    std::vector<int> vs;
 
 private:
-    explicit Action(const vector<int>& vs_) : vs(vs_) {}
+    explicit Action(const std::vector<int>& vs_) : vs(vs_) {}
 
 public:
     static Action pass() {
@@ -192,19 +189,19 @@ public:
 };
 
 int N, M, T;
-vector<vector<Vegetable>> veges_start; // veges_start[i] : vegetables appear on day i
-vector<vector<Vegetable>> veges_end;   // veges_end[i] : vegetables disappear on day i
+std::vector<std::vector<Vegetable>> veges_start; // veges_start[i] : vegetables appear on day i
+std::vector<std::vector<Vegetable>> veges_end;   // veges_end[i] : vegetables disappear on day i
 
 struct Game {
-    vector<vector<int>> has_machine;
-    vector<vector<int>> vege_values;
+    std::vector<std::vector<int>> has_machine;
+    std::vector<std::vector<int>> vege_values;
     int num_machine;
     int next_price;
     int money;
 
     Game() : num_machine(0), next_price(1), money(1) {
-        has_machine.assign(N, vector<int>(N, 0));
-        vege_values.assign(N, vector<int>(N, 0));
+        has_machine.assign(N, std::vector<int>(N, 0));
+        vege_values.assign(N, std::vector<int>(N, 0));
     }
 
     void purchase(int r, int c) {
@@ -250,10 +247,10 @@ struct Game {
     }
 
     int count_connected_machines(int r, int c) {
-        vector<pair<int, int>> queue = {{r, c}};
-        vector<vector<int>> visited(N, vector<int>(N, 0));
+        std::vector<std::pair<int, int>> queue = {{r, c}};
+        std::vector<std::vector<int>> visited(N, std::vector<int>(N, 0));
         visited[r][c] = 1;
-        int i = 0;
+        size_t i = 0;
         while (i < queue.size()) {
             int cr = queue[i].first;
             int cc = queue[i].second;
@@ -277,7 +274,7 @@ struct Game {
             return Action::pass();
         } else {
             // search best place for a new machine
-            vector<vector<int>> sum_future_veges(N, vector<int>(N, 0));
+            std::vector<std::vector<int>> sum_future_veges(N, std::vector<int>(N, 0));
             for (int i = day; i < T; i++) {
                 for (const Vegetable& vege : veges_start[i]) {
                     sum_future_veges[vege.r][vege.c] += vege.v;
@@ -308,26 +305,26 @@ struct Game {
 };
 
 int main() {
-    cin >> N >> M >> T;
+    std::cin >> N >> M >> T;
     veges_start.resize(T);
     veges_end.resize(T);
     for (int i = 0; i < M; i++) {
         int r, c, s, e, v;
-        cin >> r >> c >> s >> e >> v;
+        std::cin >> r >> c >> s >> e >> v;
         Vegetable vege(r, c, s, e, v);
         veges_start[s].push_back(vege);
         veges_end[e].push_back(vege);
     }
     Game game;
-    vector<Action> actions;
+    std::vector<Action> actions;
     for (int day = 0; day < T; day++) {
         Action action = game.select_next_action(day);
         actions.push_back(action);
         game.simulate(day, action);
     }
     for (const Action& action : actions) {
-        for (int i = 0; i < action.vs.size(); i++) {
-            cout << action.vs[i] << (i == action.vs.size() - 1 ? "\n" : " ");
+        for (size_t i = 0; i < action.vs.size(); i++) {
+            std::cout << action.vs[i] << (i == action.vs.size() - 1 ? "\n" : " ");
         }
     }
 }
