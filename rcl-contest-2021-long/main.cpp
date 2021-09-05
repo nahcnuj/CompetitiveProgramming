@@ -124,14 +124,15 @@ struct Game {
         has_machine[r2][c2] = 1;
     }
 
-    void proceed(const Action& action) {
-        // apply
+    void apply(const Action& action) {
         if (action.vs.size() == 2) {
             purchase(action.vs[0], action.vs[1]);
         } else if (action.vs.size() == 4) {
             move(action.vs[0], action.vs[1], action.vs[2], action.vs[3]);
         }
-        // harvest
+    }
+
+    void harvest() {
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
                 if (has_machine[i][j] && vege_values[i][j] > 0) {
@@ -140,11 +141,13 @@ struct Game {
                 }
             }
         }
+    }
 
+    void proceed(const Action& action) {
+        apply(action);
+        harvest();
         disappear_veges();
-
-        day++;
-        if (day < T) {
+        if (++day < T) {
             appear_veges();
         }
     }
