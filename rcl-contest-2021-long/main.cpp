@@ -158,8 +158,28 @@ inline bool operator<(const std::_Rb_tree_iterator<std::pair<const std::vector<V
 }
 #pragma endregion
 
+const int MAX_N = 16;
+
 const int DR[4] = {1, 0, -1, 0};
 const int DC[4] = {0, 1, 0, -1};
+
+template<int N> class Costs {
+    long long costs[N+1];
+
+public:
+    constexpr Costs() : costs() {
+        for (int n = 1; n <= N; n++) {
+            costs[n] = (long long)n*n*n;
+        }
+    }
+
+    // cost of n-th machine
+    constexpr long long operator[](size_t n) const {
+        assert(1 <= n && n <= N);
+        return costs[n];
+    }
+};
+const Costs<MAX_N*MAX_N> machine_costs;
 
 struct Vegetable {
     int r, c, s, e, v;
@@ -203,32 +223,37 @@ struct Game {
     std::vector<std::vector<int>> has_machine;
     std::vector<std::vector<int>> vege_values;
     int num_machine;
-    int next_price;
     int money;
 
-    Game() : num_machine(0), next_price(1), money(1) {
+    Game() : num_machine(0), money(1) {
         has_machine.assign(N, std::vector<int>(N, 0));
         vege_values.assign(N, std::vector<int>(N, 0));
     }
 
-    Game(const Game& game) : num_machine(game.num_machine), next_price(game.next_price), money(game.money) {
+    Game(const Game& game) : num_machine(game.num_machine), money(game.money) {
         std::copy(game.has_machine.begin(), game.has_machine.end(), std::back_inserter(has_machine));
         std::copy(game.vege_values.begin(), game.vege_values.end(), std::back_inserter(vege_values));
     }
 
+    inline int get_next_machine_price() const {
+        return machine_costs[num_machine+1];
+    }
+
+    inline bool can_buy_machine() const {
+        return money >= get_next_machine_price();
+    }
+
     void purchase(int r, int c) {
         assert(!has_machine[r][c]);
-        assert(next_price <= money);
+        assert(can_buy_machine());
         has_machine[r][c] = 1;
-        money -= next_price;
+        money -= get_next_machine_price();
         num_machine++;
-        next_price = (num_machine + 1) * (num_machine + 1) * (num_machine + 1);
     }
 
     void move(int r1, int c1, int r2, int c2) {
-        assert(has_machine[r1][c1]);
+        assert(has_machine[r1][c1] && !has_machine[r2][c2]);
         has_machine[r1][c1] = 0;
-        assert(!has_machine[r2][c2]);
         has_machine[r2][c2] = 1;
     }
 
@@ -277,7 +302,7 @@ struct Game {
                 int nc = cc + DC[dir];
                 if (0 <= nr && nr < N && 0 <= nc && nc < N && has_machine[nr][nc] && !visited[nr][nc]) {
                     visited[nr][nc] = 1;
-                    connected_machines.push_back({nr, nc});
+                    connected_machines.emplace_back(nr, nc);
                 }
             }
             i++;
@@ -288,7 +313,7 @@ struct Game {
     Action select_next_action(int day) const {
         // implement your strategy here
 
-        if (money < next_price) {
+        if (!can_buy_machine()) {
             return Action::pass();
         } else {
             // search best place for a new machine
