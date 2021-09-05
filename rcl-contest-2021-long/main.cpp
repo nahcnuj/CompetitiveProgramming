@@ -191,8 +191,12 @@ struct Game {
     Action select_next_action() {
         sum_future_veges.assign(N, std::vector<int>(N, 0));
 
-        // search best place for a new machine
-        for (int i = day; i < T; i++) {
+#ifdef FUTURE_WINDOW
+        int range = static_cast<int>(FUTURE_WINDOW);
+#else
+        int range = T;
+#endif
+        for (int i = day; i < std::min(day + range, T); i++) {
             for (const Vegetable& vege : veges_start[i]) {
                 sum_future_veges[vege.r][vege.c] += vege.v;
             }
