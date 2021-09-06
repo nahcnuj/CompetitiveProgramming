@@ -49,6 +49,7 @@ compare-score:	$(SCORE_FILE)
 
 SCORE_CALCULATOR_BIN = python3 $(TOOL_DIR)/judge.py
 $(SCORE_FILE):	$(OUT_FILES)
+	@echo
 	@echo 'seed,score,real,user,sys,' >$@
 	@for err_file in $$(echo "$(ERR_FILES)" | tr " " "\n" | sort | tr "\n" " "); do \
 		basename="$$(basename $$err_file)" ; \
@@ -69,7 +70,7 @@ $(SCORE_FILE):	$(OUT_FILES)
 	done
 
 $(OUT_DIR)/%.txt:	$(IN_DIR)/input_%.txt $(PROGRAM) $(OUT_DIR) $(ERR_DIR)
-	@echo $*
+	@echo -n "$* "
 	@time -p $(PROGRAM) <$< >$@ 2>$(ERR_DIR)/$(notdir $@)
 
 $(OUT_DIR) $(ERR_DIR):
