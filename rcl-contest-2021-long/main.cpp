@@ -49,9 +49,9 @@ public:
         return Action({r1, c1, r2, c2});
     }
 
-    inline bool is_pass() const { return vs.size() == 1; }
+    inline bool is_pass()     const { return vs.size() == 1; }
     inline bool is_purchase() const { return vs.size() == 2; }
-    inline bool is_move() const { return vs.size() == 4; }
+    inline bool is_move()     const { return vs.size() == 4; }
 
     explicit operator unsigned() const {
         if (is_pass()) {
