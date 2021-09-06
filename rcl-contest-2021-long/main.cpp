@@ -110,29 +110,9 @@ struct Game {
 
     inline bool is_over() const { return day >= T; }
 
-    inline int get_next_machine_price() const {
-        return machine_costs[num_machine+1];
-    }
+    inline int get_next_machine_price() const { return machine_costs[num_machine+1]; }
 
-    inline bool can_buy_machine() const {
-        return money >= get_next_machine_price();
-    }
-
-    inline int future_window() const {
-#ifdef FUTURE_WINDOW
-        return static_cast<int>(FUTURE_WINDOW);
-#else
-        return T;
-#endif
-    }
-
-    inline int candidates_cutoff_rank(size_t size) const {
-#ifdef CUTOFF_RANK
-        return std::min(size, static_cast<size_t>(CUTOFF_RANK));
-#else
-        return size;
-#endif
-    }
+    inline bool can_buy_machine() const { return money >= get_next_machine_price(); }
 
     void appear_veges() {
         for (const Vegetable& vege : veges_start[day]) {
@@ -250,8 +230,11 @@ struct Game {
             auto&& dest_candidates = std::vector<std::pair<int,int>>{movable.cbegin(), movable.cbegin() + candidates_cutoff_rank(movable.size())};
 
             if (can_buy_machine()) {
-                for (auto&& destination : dest_candidates) {
-                    candidates.emplace(Action::purchase(destination.first, destination.second));
+                if ((day <= single_harvester_term() && num_machine == 0)
+                    || day > single_harvester_term()) {
+                    for (auto&& destination : dest_candidates) {
+                        candidates.emplace(Action::purchase(destination.first, destination.second));
+                    }
                 }
             }
 
@@ -310,6 +293,30 @@ private:
         }
 
         return score;
+    }
+
+    inline int future_window() const {
+#ifdef FUTURE_WINDOW
+        return static_cast<int>(FUTURE_WINDOW);
+#else
+        return T;
+#endif
+    }
+
+    inline int candidates_cutoff_rank(size_t size) const {
+#ifdef CUTOFF_RANK
+        return std::min(size, static_cast<size_t>(CUTOFF_RANK));
+#else
+        return size;
+#endif
+    }
+
+    inline int single_harvester_term() const {
+#ifdef SINGLE_HARVESTER_TERM
+        return static_cast<int>(SINGLE_HARVESTER_TERM);
+#else
+        return 0;
+#endif
     }
 };
 std::vector<std::vector<Vegetable>> Game::veges_start;
