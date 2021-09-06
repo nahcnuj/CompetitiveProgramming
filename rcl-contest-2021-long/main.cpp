@@ -16,7 +16,7 @@ public:
     }
 
     // cost of n-th machine
-    constexpr long long operator[](size_t n) const {
+    inline constexpr long long operator[](size_t n) const {
         assert(1 <= n && n <= N);
         return costs[n];
     }
@@ -37,22 +37,27 @@ private:
     explicit Action(const std::vector<int>& vs_) : vs(vs_) {}
 
 public:
-    static Action pass() {
+    inline static Action pass() {
         return Action({-1});
     }
 
-    static Action purchase(int r, int c) {
+    inline static Action purchase(int r, int c) {
         return Action({r, c});
     }
 
-    static Action move(int r1, int c1, int r2, int c2) {
+    inline static Action move(int r1, int c1, int r2, int c2) {
         return Action({r1, c1, r2, c2});
     }
 
+    inline bool is_pass() const { return vs.size() == 1; }
+    inline bool is_purchase() const { return vs.size() == 2; }
+    inline bool is_move() const { return vs.size() == 4; }
+
     explicit operator unsigned() const {
-        if (vs.size() == 1) {
+        if (is_pass()) {
             return -1;
         }
+
         unsigned hash = 0;
         for (size_t i = 0; i < vs.size(); i++) {
             hash |= (vs[i] & 0xF) << (i*4);
@@ -69,35 +74,41 @@ std::ostream& operator<<(std::ostream& os, const Action& action) {
     return os;
 }
 
-std::vector<std::vector<Vegetable>> veges_start; // veges_start[i] : vegetables appear on day i
-std::vector<std::vector<Vegetable>> veges_end;   // veges_end[i] : vegetables disappear on day i
-
 struct Game {
-    static int N, M, T;
+    int N, M, T;
     int day;
     int num_machine;
     int money;
     std::vector<bool> has_machine;
     std::vector<int> vege_values;
 
-    Game() :
-        day(0),
-        num_machine(0),
-        money(1),
-        has_machine(N*N),
-        vege_values(N*N)
-    {
+    Game() : day(0), num_machine(0), money(1) {}
+
+    Game(int N_, int M_, int T_) : Game() {
+        N = N_;
+        M = M_;
+        T = T_;
+
+        has_machine.resize(N*N);
+        vege_values.resize(N*N);
+    }
+
+    Game(const Game& game) : Game(game.N, game.M, game.T) {
+        day         = game.day;
+        num_machine = game.num_machine;
+        money       = game.money;
+        has_machine = game.has_machine;
+        vege_values = game.vege_values;
+    }
+
+    void init(const std::vector<std::vector<Vegetable>>& veges_start, const std::vector<std::vector<Vegetable>>& veges_end) {
+        this->veges_start = veges_start;
+        this->veges_end   = veges_end;
+
         appear_veges();
     }
 
-    Game(const Game& game) :
-        day(game.day),
-        num_machine(game.num_machine),
-        money(game.money),
-        has_machine(game.has_machine),
-        vege_values(game.vege_values)
-    {
-    }
+    inline bool is_over() const { return day >= T; }
 
     inline int get_next_machine_price() const {
         return machine_costs[num_machine+1];
@@ -133,10 +144,13 @@ struct Game {
     }
 
     void apply(const Action& action) {
-        if (action.vs.size() == 2) {
+        if (action.is_purchase()) {
             purchase(action.vs[0], action.vs[1]);
-        } else if (action.vs.size() == 4) {
+            return;
+        }
+        if (action.is_move()) {
             move(action.vs[0], action.vs[1], action.vs[2], action.vs[3]);
+            return;
         }
     }
 
@@ -251,6 +265,9 @@ struct Game {
     }
 
 private:
+    static std::vector<std::vector<Vegetable>> veges_start; // veges_start[i] : vegetables appear on day i
+    static std::vector<std::vector<Vegetable>> veges_end;   // veges_end[i] : vegetables disappear on day i
+
     std::vector<std::vector<int>> sum_future_veges;
     std::map<unsigned, int> evaluation_cache;
 
@@ -259,40 +276,47 @@ private:
         if (auto itr = evaluation_cache.find(hash); itr != evaluation_cache.end()) {
             return itr->second;
         }
-        auto evaluation = [this](auto&& action) -> int {
-            int score = simulate(action);
 
-            auto&& vs = action.vs;
-            if (vs.size() == 2) {
-                score += sum_future_veges[vs[0]][vs[1]] * count_connected_machines(vs[0], vs[1]);
-            } else if (vs.size() == 4) {
-                score += sum_future_veges[vs[2]][vs[3]] * count_connected_machines(vs[2], vs[3]) - sum_future_veges[vs[0]][vs[1]] * (count_connected_machines(vs[0], vs[1]) - 1);
-            }
-
-            return score;
-        }(action);
+        auto evaluation = evaluate_action_without_cache(action);
         evaluation_cache.insert(std::make_pair(hash, evaluation));
         return evaluation;
     }
+
+    int evaluate_action_without_cache(const Action& action) const {
+        int score = simulate(action);
+
+        auto&& vs = action.vs;
+        if (action.is_purchase()) {
+            score += sum_future_veges[vs[0]][vs[1]] * count_connected_machines(vs[0], vs[1]);
+        } else if (action.is_move()) {
+            score += sum_future_veges[vs[2]][vs[3]] * count_connected_machines(vs[2], vs[3]) - sum_future_veges[vs[0]][vs[1]] * (count_connected_machines(vs[0], vs[1]) - 1);
+        }
+
+        return score;
+    }
 };
-int Game::N, Game::M, Game::T;
+std::vector<std::vector<Vegetable>> Game::veges_start;
+std::vector<std::vector<Vegetable>> Game::veges_end;
 
 int main() {
-    std::cin >> Game::N >> Game::M >> Game::T;
-    veges_start.resize(Game::T);
-    veges_end.resize(Game::T);
-    for (int i = 0; i < Game::M; i++) {
+    int N, M, T;
+    std::cin >> N >> M >> T;
+    Game game(N, M, T);
+
+    std::vector<std::vector<Vegetable>> veges_start(T);
+    std::vector<std::vector<Vegetable>> veges_end(T);
+    for (int i = 0; i < M; i++) {
         int r, c, s, e, v;
         std::cin >> r >> c >> s >> e >> v;
         Vegetable vege(r, c, s, e, v);
         veges_start[s].push_back(vege);
         veges_end[e].push_back(vege);
     }
+    game.init(veges_start, veges_end);
 
-    Game game;
-    for (int day = 0; day < Game::T; day++) {
+    while (!game.is_over()) {
 #ifndef ONLINE_JUDGE
-        std::cerr << "Day: " << day << " ===============================\n";
+        std::cerr << "Day: " << game.day << " ===============================\n";
 #endif
         Action action = game.select_next_action();
         game.proceed(action);
