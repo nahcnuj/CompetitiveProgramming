@@ -220,7 +220,6 @@ struct Game {
 
     Action select_next_action() {
         sum_future_veges.assign(N, std::vector<int>(N, 0));
-
         for (int i = day; i < std::min(day + future_window(), T); i++) {
             for (const Vegetable& vege : veges_start[i]) {
                 sum_future_veges[vege.r][vege.c] += vege.v;
@@ -242,6 +241,7 @@ struct Game {
                 }
             }
         }
+
         if (!movable.empty()) {
             static auto comp = [this](const std::pair<int, int>& lhs, const std::pair<int, int>& rhs) {
                 return sum_future_veges[lhs.first][lhs.second] < sum_future_veges[rhs.first][rhs.second];
@@ -329,6 +329,7 @@ int main() {
         veges_start[s].push_back(vege);
         veges_end[e].push_back(vege);
     }
+
     game.init(veges_start, veges_end);
 
     while (!game.is_over()) {
