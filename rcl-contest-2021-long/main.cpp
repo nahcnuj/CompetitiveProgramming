@@ -118,6 +118,22 @@ struct Game {
         return money >= get_next_machine_price();
     }
 
+    inline int future_window() const {
+#ifdef FUTURE_WINDOW
+        return static_cast<int>(FUTURE_WINDOW);
+#else
+        return T;
+#endif
+    }
+
+    inline int candidates_cutoff_rank(size_t size) const {
+#ifdef CUTOFF_RANK
+        return std::min(size, static_cast<size_t>(CUTOFF_RANK));
+#else
+        return size;
+#endif
+    }
+
     void appear_veges() {
         for (const Vegetable& vege : veges_start[day]) {
             vege_values[vege.r * N + vege.c] = vege.v;
@@ -205,12 +221,7 @@ struct Game {
     Action select_next_action() {
         sum_future_veges.assign(N, std::vector<int>(N, 0));
 
-#ifdef FUTURE_WINDOW
-        int range = static_cast<int>(FUTURE_WINDOW);
-#else
-        int range = T;
-#endif
-        for (int i = day; i < std::min(day + range, T); i++) {
+        for (int i = day; i < std::min(day + future_window(), T); i++) {
             for (const Vegetable& vege : veges_start[i]) {
                 sum_future_veges[vege.r][vege.c] += vege.v;
             }
@@ -226,23 +237,28 @@ struct Game {
             for (int c = 0; c < N; c++) {
                 if (has_machine[r * N + c]) {
                     machines.emplace_back(r, c);
-                } else {
-                    if (vege_values[r * N + c] > 0) {
-                        movable.emplace_back(r, c);
-                    }
+                } else if (sum_future_veges[r][c] > 0) {
+                    movable.emplace_back(r, c);
                 }
             }
         }
+        if (!movable.empty()) {
+            static auto comp = [this](const std::pair<int, int>& lhs, const std::pair<int, int>& rhs) {
+                return sum_future_veges[lhs.first][lhs.second] < sum_future_veges[rhs.first][rhs.second];
+            };
+            std::sort(movable.rbegin(), movable.rend(), comp);
+            auto&& dest_candidates = std::vector<std::pair<int,int>>{movable.cbegin(), movable.cbegin() + candidates_cutoff_rank(movable.size())};
 
-        if (can_buy_machine()) {
-            for (auto&& to : movable) {
-                candidates.emplace(Action::purchase(to.first, to.second));
+            if (can_buy_machine()) {
+                for (auto&& destination : dest_candidates) {
+                    candidates.emplace(Action::purchase(destination.first, destination.second));
+                }
             }
-        }
 
-        for (auto&& m : machines) {
-            for (auto&& to : movable) {
-                candidates.emplace(Action::move(m.first, m.second, to.first, to.second));
+            for (auto&& machine : machines) {
+                for (auto&& destination : dest_candidates) {
+                    candidates.emplace(Action::move(machine.first, machine.second, destination.first, destination.second));
+                }
             }
         }
 
