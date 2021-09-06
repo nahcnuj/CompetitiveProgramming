@@ -20,5 +20,6 @@ unzip -nj /tmp/tools.zip -d tools
 | `make test` | Execute `a.out` for an input file of `./tools/input_*.txt` (unless `TEST_IN` is specifed) |
 | `make bench` | Execute `a.out` for all input files and summarize scores and execution times |
 | `make compare-score` | Compare score file `./score.csv` with old one `./_score.csv` (unless `OLD_SCORE_FILE` is specified) |
+| `bin/generate-csv-for-graph.bash <pattern>` | Aggregate score files that `<pattern>` matched against to create a chart |
 
 See `Makefile` for details.
