@@ -230,8 +230,8 @@ struct Game {
             auto&& dest_candidates = std::vector<std::pair<int,int>>{movable.cbegin(), movable.cbegin() + candidates_cutoff_rank(movable.size())};
 
             if (can_buy_machine()) {
-                if ((day <= single_harvester_term() && num_machine == 0)
-                    || day > single_harvester_term()) {
+                if ((day < single_harvester_term() && num_machine == 0)
+                    || day >= single_harvester_term()) {
                     for (auto&& destination : dest_candidates) {
                         candidates.emplace(Action::purchase(destination.first, destination.second));
                     }
