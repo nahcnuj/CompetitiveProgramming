@@ -59,7 +59,7 @@ $(SCORE_FILE):	$(OUT_FILES)
 		$(SCORE_CALCULATOR_BIN) $(IN_DIR)/input_$$basename $(OUT_DIR)/$$basename \
 			| sed "s|score:||" >>$$err_file ; \
 		\
-		echo $$err_file | xargs -I{} sh -c ' \
+		echo $$err_file | xargs -I{} sh -ec ' \
 			echo -n "{}," | sed "s|.*/\([0-9]\+\)\.txt|\1|" ; \
 			grep -e "^Score = " {} | sed "s/^Score = \(.*\)$$/\1,/" | tr -d "\n" ; \
 			grep -e "^real " {} | sed "s/^.* \(.*\)$$/\1,/" | tr -d "\n" ; \
