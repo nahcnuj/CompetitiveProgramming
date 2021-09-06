@@ -1,5 +1,6 @@
 #include <bits/stdc++.h>
 
+const int MAX_T = 1000;
 const int MAX_N = 16;
 
 const int DR[4] = {1, 0, -1, 0};
@@ -11,7 +12,7 @@ template<int N> class Costs {
 public:
     constexpr Costs() : costs() {
         for (int n = 1; n <= N; n++) {
-            costs[n] = (long long)n*n*n;
+            costs[n] = 1ll * n*n*n;
         }
     }
 
@@ -22,6 +23,23 @@ public:
     }
 };
 const Costs<MAX_N*MAX_N> machine_costs;
+
+template<int T> class ExpectedValues {
+    int values[T];
+
+public:
+    constexpr ExpectedValues() : values() {
+        for (int t = 0; t < T; t++) {
+            values[t] = static_cast<int>(std::pow(2.0, 1.0 + t / 100.0) / 2);
+        }
+    }
+
+    inline constexpr int operator[](size_t t) const {
+        assert(0 <= t && t < T);
+        return values[t];
+    }
+};
+const ExpectedValues<MAX_T> expected_values;
 
 struct Vegetable {
     int r, c, s, e, v;
@@ -98,7 +116,15 @@ struct Game {
         num_machine = game.num_machine;
         money       = game.money;
         has_machine = game.has_machine;
+
+        veges_start = game.veges_start;
+        veges_end   = game.veges_end;
         vege_values = game.vege_values;
+
+        machines    = game.machines;
+        num_waiting = game.num_waiting;
+
+        sum_future_veges = game.sum_future_veges;
     }
 
     void init(const std::vector<std::vector<Vegetable>>& veges_start, const std::vector<std::vector<Vegetable>>& veges_end) {
@@ -132,11 +158,22 @@ struct Game {
         has_machine[r * N + c] = true;
         money -= get_next_machine_price();
         num_machine++;
+
+        machines.emplace_back(r, c);
+        num_waiting = num_machine;
     }
 
     void move(int r1, int c1, int r2, int c2) {
         assert(has_machine[r1 * N + c1] && !has_machine[r2 * N + c2]);
         std::swap(has_machine[r1 * N + c1], has_machine[r2 * N + c2]);
+
+        auto itr = std::find(machines.begin(), machines.end(), std::make_pair(r1, c1));
+        itr->first = r2;
+        itr->second = c2;
+        num_waiting--;
+        if (num_waiting < 0) {
+            num_waiting = num_machine;
+        }
     }
 
     void apply(const Action& action) {
@@ -200,23 +237,25 @@ struct Game {
 
     Action select_next_action() {
         sum_future_veges.assign(N, std::vector<int>(N, 0));
-        for (int i = day; i < std::min(day + future_window(), T); i++) {
+        for (int i = day + 1; i < std::min(day + future_window(), T); i++) {
             for (const Vegetable& vege : veges_start[i]) {
                 sum_future_veges[vege.r][vege.c] += vege.v;
             }
         }
 
-        static auto comp = [this](const Action& lhs, const Action& rhs) { return evaluate_action(lhs) < evaluate_action(rhs); };
+        static auto comp = [this](const Action& lhs, const Action& rhs) { return lhs.is_pass() || evaluate_action(lhs) < evaluate_action(rhs); };
         std::priority_queue<Action, std::vector<Action>, decltype(comp)> candidates(comp);
         candidates.emplace(Action::pass());
 
         std::vector<std::pair<int, int>> machines;
         std::vector<std::pair<int, int>> movable;
+        int value_threshold = static_cast<int>(std::pow(2.0, (day + future_window()) / 100.0)) / (this->machines.size() + 5);
         for (int r = 0; r < N; r++) {
             for (int c = 0; c < N; c++) {
                 if (has_machine[r * N + c]) {
                     machines.emplace_back(r, c);
-                } else if (sum_future_veges[r][c] > 0) {
+                }
+                if (!has_machine[r * N + c] && vege_values[r * N + c] + sum_future_veges[r][c] >= value_threshold) {
                     movable.emplace_back(r, c);
                 }
             }
@@ -224,23 +263,23 @@ struct Game {
 
         if (!movable.empty()) {
             static auto comp = [this](const std::pair<int, int>& lhs, const std::pair<int, int>& rhs) {
-                return sum_future_veges[lhs.first][lhs.second] < sum_future_veges[rhs.first][rhs.second];
+                return vege_values[lhs.first * N + lhs.second] + sum_future_veges[lhs.first][lhs.second]
+                        < vege_values[rhs.first * N + rhs.second] + sum_future_veges[rhs.first][rhs.second];
             };
             std::sort(movable.rbegin(), movable.rend(), comp);
             auto&& dest_candidates = std::vector<std::pair<int,int>>{movable.cbegin(), movable.cbegin() + candidates_cutoff_rank(movable.size())};
 
             if (can_buy_machine()) {
-                if ((day < single_harvester_term() && num_machine == 0)
-                    || day >= single_harvester_term()) {
-                    for (auto&& destination : dest_candidates) {
-                        candidates.emplace(Action::purchase(destination.first, destination.second));
-                    }
+                for (auto&& destination : dest_candidates) {
+                    candidates.emplace(Action::purchase(destination.first, destination.second));
                 }
             }
 
-            for (auto&& machine : machines) {
-                for (auto&& destination : dest_candidates) {
-                    candidates.emplace(Action::move(machine.first, machine.second, destination.first, destination.second));
+            if (num_machine > 0) {
+                for (auto&& machine : this->machines) {
+                    for (auto&& destination : dest_candidates) {
+                        candidates.emplace(Action::move(machine.first, machine.second, destination.first, destination.second));
+                    }
                 }
             }
         }
@@ -254,10 +293,12 @@ struct Game {
             candidates.pop();
 
             std::cerr << cand << ' ' << evaluate_action(cand) << "\n";
-            if (++i >= 5) {
+            if (++i >= 10) {
                 break;
             }
         }
+        std::cerr << candidates.size() << " candidates\n";
+        std::cerr << "SELECTED " << action << ' ' << evaluate_action(action) << '\n';
 #endif
 
         return action;
@@ -266,6 +307,9 @@ struct Game {
 private:
     static std::vector<std::vector<Vegetable>> veges_start; // veges_start[i] : vegetables appear on day i
     static std::vector<std::vector<Vegetable>> veges_end;   // veges_end[i] : vegetables disappear on day i
+    
+    std::vector<std::pair<int,int>> machines;
+    int num_waiting;
 
     std::vector<std::vector<int>> sum_future_veges;
     std::map<unsigned, int> evaluation_cache;
@@ -281,25 +325,51 @@ private:
         return evaluation;
     }
 
-    int evaluate_action_without_cache(const Action& action) const {
-        int score = simulate(action);
+    int evaluate_action_without_cache(const Action& action) {
+        if (num_machine == 0) {
+            return action.is_pass() ? 0 : 1;
+        }
+        int actual_score_diff = simulate(action) - money;
+
+        int expected_score = 0;
 
         auto&& vs = action.vs;
         if (action.is_purchase()) {
-            score += sum_future_veges[vs[0]][vs[1]] * count_connected_machines(vs[0], vs[1]);
+            expected_score += sum_future_veges[vs[0]][vs[1]];
+            expected_score += count_connected_machines(vs[0], vs[1]);
         } else if (action.is_move()) {
-            score += sum_future_veges[vs[2]][vs[3]] * count_connected_machines(vs[2], vs[3]);
-            score -= sum_future_veges[vs[0]][vs[1]] * (count_connected_machines(vs[0], vs[1]) - 1);
+            expected_score += sum_future_veges[vs[2]][vs[3]] - sum_future_veges[vs[0]][vs[1]];
+            expected_score += count_connected_machines(vs[2], vs[3]);
         }
 
-        return score;
+        for (auto&& machine : machines) {
+            int r = machine.first, c = machine.second;
+            if ((!action.is_pass() && r == vs[0] && c == vs[1])
+                   || (action.is_move() && r == vs[2] && c == vs[3])) {
+                continue;
+            }
+            expected_score += sum_future_veges[r][c];
+        }
+
+        return actual_score_diff + std::max(expected_score, actual_score_diff);
+    }
+
+    bool alive_vegetable_tomorrow(int r, int c) const {
+        if (vege_values[r * N + c] == 0) {
+            return false;
+        }
+        auto&& dead_veges = veges_end[day+1];
+        auto itr = std::find_if(dead_veges.begin(), dead_veges.end(), [r,c](const Vegetable& vege) {
+            return vege.r == r && vege.c == c;
+        });
+        return itr != dead_veges.end();
     }
 
     inline int future_window() const {
 #ifdef FUTURE_WINDOW
         return static_cast<int>(FUTURE_WINDOW);
 #else
-        return T;
+        return static_cast<int>(std::sqrt(day));
 #endif
     }
 
@@ -315,7 +385,15 @@ private:
 #ifdef SINGLE_HARVESTER_TERM
         return static_cast<int>(SINGLE_HARVESTER_TERM);
 #else
-        return 0;
+        return 1;
+#endif
+    }
+
+    inline int ending_term() const {
+#ifdef ENDING_TERM
+        return static_cast<int>(ENDING_TERM);
+#else
+        return 1000;
 #endif
     }
 };
@@ -341,7 +419,7 @@ int main() {
 
     while (!game.is_over()) {
 #ifndef ONLINE_JUDGE
-        std::cerr << "Day: " << game.day << " ===============================\n";
+        std::cerr << "Day: " << game.day << " Money: " << game.money << " Harvester: " << game.num_machine << " ===============================\n";
 #endif
         Action action = game.select_next_action();
         game.proceed(action);
