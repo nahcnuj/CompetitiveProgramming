@@ -305,7 +305,8 @@ private:
         if (action.is_purchase()) {
             score += sum_future_veges[vs[0]][vs[1]] * count_connected_machines(vs[0], vs[1]);
         } else if (action.is_move()) {
-            score += sum_future_veges[vs[2]][vs[3]] * count_connected_machines(vs[2], vs[3]) - sum_future_veges[vs[0]][vs[1]] * (count_connected_machines(vs[0], vs[1]) - 1);
+            score += sum_future_veges[vs[2]][vs[3]] * count_connected_machines(vs[2], vs[3]);
+            score -= sum_future_veges[vs[0]][vs[1]] * (count_connected_machines(vs[0], vs[1]) - 1);
         }
 
         return score;
