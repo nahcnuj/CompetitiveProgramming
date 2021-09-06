@@ -11,7 +11,8 @@ trap 'git checkout -; exit 1' SIGINT SIGQUIT SIGKILL SIGTERM
 
 for days in $(seq ${begin} ${skip} ${end}); do
     echo ${days}
-    make DEBUG=-DSINGLE_HARVESTER_TERM=${days} -j2 clean all
+    make DEBUG=-DSINGLE_HARVESTER_TERM=${days} clean all
     cp scores.csv "scores/v3.0.0_single-harvester-term/scores_v3.0.0_${days}.csv"
 done
 
+git checkout -

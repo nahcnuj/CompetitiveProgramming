@@ -71,6 +71,7 @@ $(SCORE_FILE):	$(OUT_FILES)
 
 $(OUT_DIR)/%.txt:	$(IN_DIR)/input_%.txt $(PROGRAM) $(OUT_DIR) $(ERR_DIR)
 	@echo -n "$* "
+	@rm -f $(ERR_DIR)/$(notdir $@)
 	@time -p $(PROGRAM) <$< >$@ 2>$(ERR_DIR)/$(notdir $@)
 
 $(OUT_DIR) $(ERR_DIR):
