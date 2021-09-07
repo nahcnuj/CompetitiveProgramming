@@ -236,53 +236,9 @@ struct Game {
     }
 
     Action select_next_action() {
-        sum_future_veges.assign(N, std::vector<int>(N, 0));
-        for (int i = day + 1; i < std::min(day + future_window(), T); i++) {
-            for (const Vegetable& vege : veges_start[i]) {
-                sum_future_veges[vege.r][vege.c] += vege.v;
-            }
-        }
-
         static auto comp = [this](const Action& lhs, const Action& rhs) { return lhs.is_pass() || evaluate_action(lhs) < evaluate_action(rhs); };
         std::priority_queue<Action, std::vector<Action>, decltype(comp)> candidates(comp);
         candidates.emplace(Action::pass());
-
-        std::vector<std::pair<int, int>> machines;
-        std::vector<std::pair<int, int>> movable;
-        int value_threshold = static_cast<int>(std::pow(2.0, (day + future_window()) / 100.0)) / (this->machines.size() + 5);
-        for (int r = 0; r < N; r++) {
-            for (int c = 0; c < N; c++) {
-                if (has_machine[r * N + c]) {
-                    machines.emplace_back(r, c);
-                }
-                if (!has_machine[r * N + c] && vege_values[r * N + c] + sum_future_veges[r][c] >= value_threshold) {
-                    movable.emplace_back(r, c);
-                }
-            }
-        }
-
-        if (!movable.empty()) {
-            static auto comp = [this](const std::pair<int, int>& lhs, const std::pair<int, int>& rhs) {
-                return vege_values[lhs.first * N + lhs.second] + sum_future_veges[lhs.first][lhs.second]
-                        < vege_values[rhs.first * N + rhs.second] + sum_future_veges[rhs.first][rhs.second];
-            };
-            std::sort(movable.rbegin(), movable.rend(), comp);
-            auto&& dest_candidates = std::vector<std::pair<int,int>>{movable.cbegin(), movable.cbegin() + candidates_cutoff_rank(movable.size())};
-
-            if (can_buy_machine()) {
-                for (auto&& destination : dest_candidates) {
-                    candidates.emplace(Action::purchase(destination.first, destination.second));
-                }
-            }
-
-            if (num_machine > 0) {
-                for (auto&& machine : this->machines) {
-                    for (auto&& destination : dest_candidates) {
-                        candidates.emplace(Action::move(machine.first, machine.second, destination.first, destination.second));
-                    }
-                }
-            }
-        }
 
         auto action = candidates.top();
 
@@ -326,30 +282,9 @@ private:
     }
 
     int evaluate_action_without_cache(const Action& action) {
-        if (num_machine == 0) {
-            return action.is_pass() ? 0 : 1;
-        }
         int actual_score_diff = simulate(action) - money;
 
         int expected_score = 0;
-
-        auto&& vs = action.vs;
-        if (action.is_purchase()) {
-            expected_score += sum_future_veges[vs[0]][vs[1]];
-            expected_score += count_connected_machines(vs[0], vs[1]);
-        } else if (action.is_move()) {
-            expected_score += sum_future_veges[vs[2]][vs[3]] - sum_future_veges[vs[0]][vs[1]];
-            expected_score += count_connected_machines(vs[2], vs[3]);
-        }
-
-        for (auto&& machine : machines) {
-            int r = machine.first, c = machine.second;
-            if ((!action.is_pass() && r == vs[0] && c == vs[1])
-                   || (action.is_move() && r == vs[2] && c == vs[3])) {
-                continue;
-            }
-            expected_score += sum_future_veges[r][c];
-        }
 
         return actual_score_diff + std::max(expected_score, actual_score_diff);
     }
