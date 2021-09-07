@@ -68,7 +68,7 @@ public:
     }
 
     inline bool is_pass()     const { return vs.size() == 1; }
-    inline bool is_buy() const { return vs.size() == 2; }
+    inline bool is_buy()      const { return vs.size() == 2; }
     inline bool is_move()     const { return vs.size() == 4; }
 
     explicit operator unsigned() const {
@@ -136,7 +136,7 @@ public:
 
     Action select_next_action() {
         static auto comp = [this](const Action& lhs, const Action& rhs) {
-            return lhs.is_pass() || !rhs.is_pass() || evaluate_action(lhs) < evaluate_action(rhs);
+            return evaluate_action(lhs) < evaluate_action(rhs);
         };
         std::priority_queue<Action, std::vector<Action>, decltype(comp)> candidates(comp);
 
@@ -278,7 +278,8 @@ private:
         return actual_score_diff + std::max(expected_score, actual_score_diff);
     }
 
-    std::vector<Action> generate_move_actions() const {
+    template<typename value_t, typename container_t, typename comparator_t>
+    void generate_move_actions(std::priority_queue<value_t, container_t, comparator_t>& queue) const {
         std::vector<Action> actions;
         actions.reserve(N*N*N);
         for (int r = 0; r < N; r++) {
@@ -287,17 +288,17 @@ private:
                     continue;
                 }
                 for (auto&& harvester : harvesters) {
-                    actions.emplace_back(Action::move(harvester.first, harvester.second, r, c));
+                    queue.emplace(Action::move(harvester.first, harvester.second, r, c));
                 }
             }
         }
-        return actions;
     }
 
-    std::vector<Action> generate_purchase_actions() const {
-        if (!can_buy_harvester()) {
-            return {{}};
-        }
+    template<typename value_t, typename container_t, typename comparator_t>
+    void generate_purchase_actions(std::priority_queue<value_t, container_t, comparator_t>& queue) const {
+#ifndef ONLINE_JUDGE
+        assert(can_buy_harvester());
+#endif
 
         std::vector<Action> actions;
         actions.reserve(N*N);
@@ -306,10 +307,9 @@ private:
                 if (has_harvester[r * N + c]) {
                     continue;
                 }
-                actions.emplace_back(Action::buy(r, c));
+                queue.emplace(Action::buy(r, c));
             }
         }
-        return actions;
     }
 
     inline int future_window() const {
