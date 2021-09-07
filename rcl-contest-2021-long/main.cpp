@@ -102,6 +102,11 @@ struct Game {
     std::vector<bool> has_harvester;
     std::vector<int> vege_values;
 
+private:
+    std::vector<std::vector<int>> sum_future_veges;
+    std::map<unsigned, int> evaluation_cache;
+
+public:
     Game() {
 #ifndef ONLINE_JUDGE
         assert(N > 0 && M > 0 && T > 0);
@@ -119,8 +124,48 @@ struct Game {
 
     inline int num_harvester() const { return harvesters.size(); }
 
-    inline int get_next_harvester_cost() const { return harvester_costs[num_harvester()+1]; }
+    void proceed(const Action& action) {
+        apply(action);
+        harvest();
+        disappear_veges();
+        if (++day < T) {
+            appear_veges();
+        }
+        evaluation_cache.clear();
+    }
 
+    Action select_next_action() {
+        static auto comp = [this](const Action& lhs, const Action& rhs) {
+            return lhs.is_pass() || !rhs.is_pass() || evaluate_action(lhs) < evaluate_action(rhs);
+        };
+        std::priority_queue<Action, std::vector<Action>, decltype(comp)> candidates(comp);
+
+        if (candidates.empty()) {
+            return Action::pass();
+        }
+
+        auto action = candidates.top();
+
+#ifndef ONLINE_JUDGE
+        int i = 0;
+        while (!candidates.empty()) {
+            auto cand = candidates.top();
+            candidates.pop();
+
+            std::cerr << cand << ' ' << evaluate_action(cand) << "\n";
+            if (++i >= 10) {
+                break;
+            }
+        }
+        std::cerr << candidates.size() << " candidates\n";
+        std::cerr << "SELECTED " << action << ' ' << evaluate_action(action) << '\n';
+#endif
+
+        return action;
+    }
+
+private:
+    inline int get_next_harvester_cost() const { return harvester_costs[num_harvester()+1]; }
     inline bool can_buy_harvester() const { return money >= get_next_harvester_cost(); }
 
     void appear_veges() {
@@ -187,16 +232,6 @@ struct Game {
         }
     }
 
-    void proceed(const Action& action) {
-        apply(action);
-        harvest();
-        disappear_veges();
-        if (++day < T) {
-            appear_veges();
-        }
-        evaluation_cache.clear();
-    }
-
     Game simulate(const Action& action) const {
         auto copied_game = *this;
         copied_game.proceed(action);
@@ -223,40 +258,6 @@ struct Game {
         }
         return count;
     }
-
-    Action select_next_action() {
-        static auto comp = [this](const Action& lhs, const Action& rhs) {
-            return lhs.is_pass() || !rhs.is_pass() || evaluate_action(lhs) < evaluate_action(rhs);
-        };
-        std::priority_queue<Action, std::vector<Action>, decltype(comp)> candidates(comp);
-
-        if (candidates.empty()) {
-            return Action::pass();
-        }
-
-        auto action = candidates.top();
-
-#ifndef ONLINE_JUDGE
-        int i = 0;
-        while (!candidates.empty()) {
-            auto cand = candidates.top();
-            candidates.pop();
-
-            std::cerr << cand << ' ' << evaluate_action(cand) << "\n";
-            if (++i >= 10) {
-                break;
-            }
-        }
-        std::cerr << candidates.size() << " candidates\n";
-        std::cerr << "SELECTED " << action << ' ' << evaluate_action(action) << '\n';
-#endif
-
-        return action;
-    }
-
-private:
-    std::vector<std::vector<int>> sum_future_veges;
-    std::map<unsigned, int> evaluation_cache;
 
     int evaluate_action(const Action& action) {
         auto hash = static_cast<unsigned>(action) | (static_cast<unsigned>(day) << 16);
