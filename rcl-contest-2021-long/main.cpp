@@ -236,10 +236,10 @@ struct Game {
     }
 
     Action select_next_action() {
-        static auto comp = [this](const Action& lhs, const Action& rhs) { return lhs.is_pass() || evaluate_action(lhs) < evaluate_action(rhs); };
-        std::priority_queue<Action, std::vector<Action>, decltype(comp)> candidates(comp);
-        candidates.emplace(Action::pass());
-
+        static auto comp = [this](const Action& lhs, const Action& rhs) {
+            return lhs.is_pass() || !rhs.is_pass() || evaluate_action(lhs) < evaluate_action(rhs);
+        };
+        std::priority_queue<Action, std::vector<Action>, decltype(comp)> candidates(comp, generate_candidates());
         auto action = candidates.top();
 
 #ifndef ONLINE_JUDGE
@@ -287,6 +287,12 @@ private:
         int expected_score = 0;
 
         return actual_score_diff + std::max(expected_score, actual_score_diff);
+    }
+
+    std::vector<Action> generate_candidates() const {
+        std::vector<Action> candidates;
+        candidates.emplace_back(Action::pass());
+        return candidates;
     }
 
     bool alive_vegetable_tomorrow(int r, int c) const {
