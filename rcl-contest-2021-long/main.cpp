@@ -93,42 +93,23 @@ std::ostream& operator<<(std::ostream& os, const Action& action) {
 }
 
 struct Game {
-    int N, M, T;
-    int day;
-    int money;
+    static std::vector<std::vector<Vegetable>> veges_start; // veges_start[i] : vegetables appear on day i
+    static std::vector<std::vector<Vegetable>> veges_end;   // veges_end[i] : vegetables disappear on day i
+
+    static int N, M, T;
+
+    int day = 0;
+    int money = 1;
     std::vector<std::pair<int,int>> harvesters;
     std::vector<bool> has_harvester;
     std::vector<int> vege_values;
 
-    Game() : day(0), money(1) {}
-
-    Game(int N_, int M_, int T_) : Game() {
-        N = N_;
-        M = M_;
-        T = T_;
+    Game() {
+        assert(N > 0 && M > 0 && T > 0);
+        assert(static_cast<int>(veges_start.size()) == T && static_cast<int>(veges_end.size()) == T);
 
         has_harvester.resize(N*N);
         vege_values.resize(N*N);
-    }
-
-    Game(const Game& game) : Game(game.N, game.M, game.T) {
-        day         = game.day;
-        money       = game.money;
-        harvesters    = game.harvesters;
-        has_harvester = game.has_harvester;
-
-        vege_values = game.vege_values;
-        veges_start = game.veges_start;
-        veges_end   = game.veges_end;
-
-        num_waiting = game.num_waiting;
-
-        sum_future_veges = game.sum_future_veges;
-    }
-
-    void init(const std::vector<std::vector<Vegetable>>& veges_start, const std::vector<std::vector<Vegetable>>& veges_end) {
-        this->veges_start = veges_start;
-        this->veges_end   = veges_end;
 
         appear_veges();
     }
@@ -160,7 +141,6 @@ struct Game {
         money -= get_next_harvester_cost();
 
         harvesters.emplace_back(r, c);
-        num_waiting = num_harvester();
     }
 
     void move(int r1, int c1, int r2, int c2) {
@@ -170,10 +150,6 @@ struct Game {
         auto itr = std::find(harvesters.begin(), harvesters.end(), std::make_pair(r1, c1));
         itr->first = r2;
         itr->second = c2;
-        num_waiting--;
-        if (num_waiting < 0) {
-            num_waiting = num_harvester();
-        }
     }
 
     void apply(const Action& action) {
@@ -266,11 +242,6 @@ struct Game {
     }
 
 private:
-    static std::vector<std::vector<Vegetable>> veges_start; // veges_start[i] : vegetables appear on day i
-    static std::vector<std::vector<Vegetable>> veges_end;   // veges_end[i] : vegetables disappear on day i
-
-    int num_waiting;
-
     std::vector<std::vector<int>> sum_future_veges;
     std::map<unsigned, int> evaluation_cache;
 
@@ -370,25 +341,24 @@ private:
 #endif
     }
 };
+int Game::N, Game::M, Game::T;
 std::vector<std::vector<Vegetable>> Game::veges_start;
 std::vector<std::vector<Vegetable>> Game::veges_end;
 
 int main() {
-    int N, M, T;
-    std::cin >> N >> M >> T;
-    Game game(N, M, T);
+    std::cin >> Game::N >> Game::M >> Game::T;
 
-    std::vector<std::vector<Vegetable>> veges_start(T);
-    std::vector<std::vector<Vegetable>> veges_end(T);
-    for (int i = 0; i < M; i++) {
+    Game::veges_start.resize(Game::T);
+    Game::veges_end.resize(Game::T);
+    for (int i = 0; i < Game::M; i++) {
         int r, c, s, e, v;
         std::cin >> r >> c >> s >> e >> v;
         Vegetable vege(r, c, s, e, v);
-        veges_start[s].push_back(vege);
-        veges_end[e].push_back(vege);
+        Game::veges_start[s].push_back(vege);
+        Game::veges_end[e].push_back(vege);
     }
 
-    game.init(veges_start, veges_end);
+    Game game;
 
     while (!game.is_over()) {
 #ifndef ONLINE_JUDGE
