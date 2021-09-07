@@ -134,6 +134,12 @@ public:
         evaluation_cache.clear();
     }
 
+    Game simulate(const Action& action) const {
+        auto copied_game = *this;
+        copied_game.proceed(action);
+        return copied_game;
+    }
+
     Action select_next_action() {
         static auto comp = [this](const Action& lhs, const Action& rhs) {
             return evaluate_action(lhs) < evaluate_action(rhs);
@@ -192,13 +198,13 @@ private:
 
     void buy(int r, int c) {
 #ifndef ONLINE_JUDGE
-        assert(!has_harvester[r * N + c]);
         assert(can_buy_harvester());
+        assert(!has_harvester[r * N + c]);
 #endif
 
-        has_harvester[r * N + c] = true;
         money -= get_next_harvester_cost();
 
+        has_harvester[r * N + c] = true;
         harvesters.emplace_back(r, c);
     }
 
@@ -236,12 +242,6 @@ private:
         }
     }
 
-    Game simulate(const Action& action) const {
-        auto copied_game = *this;
-        copied_game.proceed(action);
-        return copied_game;
-    }
-
     int count_connected_harvesters(int r, int c) const {
         std::vector<std::pair<int, int>> connected_harvesters = {{r, c}};
         std::vector<bool> visited(N*N);
@@ -274,12 +274,12 @@ private:
         return evaluation;
     }
 
-    int evaluate_action_without_cache(const Action& action) {
+    int evaluate_action_without_cache(const Action& action) const {
         int actual_score_diff = simulate(action).money - money;
 
         int expected_score = 0;
 
-        return actual_score_diff + std::max(expected_score, actual_score_diff);
+        return actual_score_diff + expected_score;
     }
 
     template<typename value_t, typename container_t, typename comparator_t>
