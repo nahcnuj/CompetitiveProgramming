@@ -239,7 +239,12 @@ struct Game {
         static auto comp = [this](const Action& lhs, const Action& rhs) {
             return lhs.is_pass() || !rhs.is_pass() || evaluate_action(lhs) < evaluate_action(rhs);
         };
-        std::priority_queue<Action, std::vector<Action>, decltype(comp)> candidates(comp, generate_candidates());
+        std::priority_queue<Action, std::vector<Action>, decltype(comp)> candidates(comp);
+
+        if (candidates.empty()) {
+            return Action::pass();
+        }
+
         auto action = candidates.top();
 
 #ifndef ONLINE_JUDGE
@@ -289,10 +294,37 @@ private:
         return actual_score_diff + std::max(expected_score, actual_score_diff);
     }
 
-    std::vector<Action> generate_candidates() const {
-        std::vector<Action> candidates;
-        candidates.emplace_back(Action::pass());
-        return candidates;
+    std::vector<Action> generate_move_actions() const {
+        std::vector<Action> actions;
+        actions.reserve(N*N*N);
+        for (int r = 0; r < N; r++) {
+            for (int c = 0; c < N; c++) {
+                if (has_machine[r * N + c]) {
+                    continue;
+                }
+                for (auto&& machine : machines) {
+                    actions.emplace_back(Action::move(machine.first, machine.second, r, c));
+                }
+            }
+        }
+        return actions;
+    }
+
+    std::vector<Action> generate_purchase_actions() const {
+        if (!can_buy_machine()) {
+            return {{}};
+        }
+
+        std::vector<Action> actions;
+        actions.reserve(N*N);
+        for (int r = 0; r < N; r++) {
+            for (int c = 0; c < N; c++) {
+                if (!has_machine[r * N + c]) {
+                    actions.emplace_back(Action::purchase(r, c));
+                }
+            }
+        }
+        return actions;
     }
 
     bool alive_vegetable_tomorrow(int r, int c) const {
