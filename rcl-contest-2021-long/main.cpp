@@ -140,6 +140,10 @@ public:
         };
         std::priority_queue<Action, std::vector<Action>, decltype(comp)> candidates(comp);
 
+        if (num_harvester() == 0) {
+            generate_buy_actions(candidates);
+        }
+
         if (candidates.empty()) {
             return Action::pass();
         }
@@ -295,7 +299,7 @@ private:
     }
 
     template<typename value_t, typename container_t, typename comparator_t>
-    void generate_purchase_actions(std::priority_queue<value_t, container_t, comparator_t>& queue) const {
+    void generate_buy_actions(std::priority_queue<value_t, container_t, comparator_t>& queue) const {
 #ifndef ONLINE_JUDGE
         assert(can_buy_harvester());
 #endif
