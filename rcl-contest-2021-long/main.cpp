@@ -197,10 +197,10 @@ struct Game {
         evaluation_cache.clear();
     }
 
-    int simulate(const Action& action) const {
+    Game simulate(const Action& action) const {
         auto copied_game = *this;
         copied_game.proceed(action);
-        return copied_game.money;
+        return copied_game;
     }
 
     int count_connected_harvesters(int r, int c) const {
@@ -270,7 +270,7 @@ private:
     }
 
     int evaluate_action_without_cache(const Action& action) {
-        int actual_score_diff = simulate(action) - money;
+        int actual_score_diff = simulate(action).money - money;
 
         int expected_score = 0;
 
