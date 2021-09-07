@@ -140,6 +140,10 @@ public:
         };
         std::priority_queue<Action, std::vector<Action>, decltype(comp)> candidates(comp);
 
+        if (num_harvester() == 0) {
+            generate_purchase_actions(candidates);
+        }
+
         if (candidates.empty()) {
             return Action::pass();
         }
