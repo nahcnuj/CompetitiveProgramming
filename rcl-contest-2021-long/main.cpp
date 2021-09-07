@@ -16,13 +16,13 @@ public:
         }
     }
 
-    // cost of n-th machine
+    // cost of n-th harvester
     inline constexpr long long operator[](size_t n) const {
         assert(1 <= n && n <= N);
         return costs[n];
     }
 };
-const Costs<MAX_N*MAX_N> machine_costs;
+const Costs<MAX_N*MAX_N> harvester_costs;
 
 template<int T> class ExpectedValues {
     int values[T];
@@ -59,7 +59,7 @@ public:
         return Action({-1});
     }
 
-    inline static Action purchase(int r, int c) {
+    inline static Action buy(int r, int c) {
         return Action({r, c});
     }
 
@@ -68,7 +68,7 @@ public:
     }
 
     inline bool is_pass()     const { return vs.size() == 1; }
-    inline bool is_purchase() const { return vs.size() == 2; }
+    inline bool is_buy() const { return vs.size() == 2; }
     inline bool is_move()     const { return vs.size() == 4; }
 
     explicit operator unsigned() const {
@@ -95,33 +95,32 @@ std::ostream& operator<<(std::ostream& os, const Action& action) {
 struct Game {
     int N, M, T;
     int day;
-    int num_machine;
     int money;
-    std::vector<bool> has_machine;
+    std::vector<std::pair<int,int>> harvesters;
+    std::vector<bool> has_harvester;
     std::vector<int> vege_values;
 
-    Game() : day(0), num_machine(0), money(1) {}
+    Game() : day(0), money(1) {}
 
     Game(int N_, int M_, int T_) : Game() {
         N = N_;
         M = M_;
         T = T_;
 
-        has_machine.resize(N*N);
+        has_harvester.resize(N*N);
         vege_values.resize(N*N);
     }
 
     Game(const Game& game) : Game(game.N, game.M, game.T) {
         day         = game.day;
-        num_machine = game.num_machine;
         money       = game.money;
-        has_machine = game.has_machine;
+        harvesters    = game.harvesters;
+        has_harvester = game.has_harvester;
 
+        vege_values = game.vege_values;
         veges_start = game.veges_start;
         veges_end   = game.veges_end;
-        vege_values = game.vege_values;
 
-        machines    = game.machines;
         num_waiting = game.num_waiting;
 
         sum_future_veges = game.sum_future_veges;
@@ -136,9 +135,11 @@ struct Game {
 
     inline bool is_over() const { return day >= T; }
 
-    inline int get_next_machine_price() const { return machine_costs[num_machine+1]; }
+    inline int num_harvester() const { return harvesters.size(); }
 
-    inline bool can_buy_machine() const { return money >= get_next_machine_price(); }
+    inline int get_next_harvester_cost() const { return harvester_costs[num_harvester()+1]; }
+
+    inline bool can_buy_harvester() const { return money >= get_next_harvester_cost(); }
 
     void appear_veges() {
         for (const Vegetable& vege : veges_start[day]) {
@@ -152,33 +153,32 @@ struct Game {
         }
     }
 
-    void purchase(int r, int c) {
-        assert(!has_machine[r * N + c]);
-        assert(can_buy_machine());
-        has_machine[r * N + c] = true;
-        money -= get_next_machine_price();
-        num_machine++;
+    void buy(int r, int c) {
+        assert(!has_harvester[r * N + c]);
+        assert(can_buy_harvester());
+        has_harvester[r * N + c] = true;
+        money -= get_next_harvester_cost();
 
-        machines.emplace_back(r, c);
-        num_waiting = num_machine;
+        harvesters.emplace_back(r, c);
+        num_waiting = num_harvester();
     }
 
     void move(int r1, int c1, int r2, int c2) {
-        assert(has_machine[r1 * N + c1] && !has_machine[r2 * N + c2]);
-        std::swap(has_machine[r1 * N + c1], has_machine[r2 * N + c2]);
+        assert(has_harvester[r1 * N + c1] && !has_harvester[r2 * N + c2]);
+        std::swap(has_harvester[r1 * N + c1], has_harvester[r2 * N + c2]);
 
-        auto itr = std::find(machines.begin(), machines.end(), std::make_pair(r1, c1));
+        auto itr = std::find(harvesters.begin(), harvesters.end(), std::make_pair(r1, c1));
         itr->first = r2;
         itr->second = c2;
         num_waiting--;
         if (num_waiting < 0) {
-            num_waiting = num_machine;
+            num_waiting = num_harvester();
         }
     }
 
     void apply(const Action& action) {
-        if (action.is_purchase()) {
-            purchase(action.vs[0], action.vs[1]);
+        if (action.is_buy()) {
+            buy(action.vs[0], action.vs[1]);
             return;
         }
         if (action.is_move()) {
@@ -190,8 +190,8 @@ struct Game {
     void harvest() {
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
-                if (has_machine[i * N + j] && vege_values[i * N + j] > 0) {
-                    money += vege_values[i * N + j] * count_connected_machines(i, j);
+                if (has_harvester[i * N + j] && vege_values[i * N + j] > 0) {
+                    money += vege_values[i * N + j] * count_connected_harvesters(i, j);
                     vege_values[i * N + j] = 0;
                 }
             }
@@ -214,20 +214,20 @@ struct Game {
         return copied_game.money;
     }
 
-    int count_connected_machines(int r, int c) const {
-        std::vector<std::pair<int, int>> connected_machines = {{r, c}};
+    int count_connected_harvesters(int r, int c) const {
+        std::vector<std::pair<int, int>> connected_harvesters = {{r, c}};
         std::vector<bool> visited(N*N);
         visited[r * N + c] = true;
         size_t count = 0;
-        while (count < connected_machines.size()) {
-            int cr = connected_machines[count].first;
-            int cc = connected_machines[count].second;
+        while (count < connected_harvesters.size()) {
+            int cr = connected_harvesters[count].first;
+            int cc = connected_harvesters[count].second;
             for (int dir = 0; dir < 4; dir++) {
                 int nr = cr + DR[dir];
                 int nc = cc + DC[dir];
-                if (0 <= nr && nr < N && 0 <= nc && nc < N && has_machine[nr * N + nc] && !visited[nr * N + nc]) {
+                if (0 <= nr && nr < N && 0 <= nc && nc < N && has_harvester[nr * N + nc] && !visited[nr * N + nc]) {
                     visited[nr * N + nc] = true;
-                    connected_machines.emplace_back(nr, nc);
+                    connected_harvesters.emplace_back(nr, nc);
                 }
             }
             count++;
@@ -268,8 +268,7 @@ struct Game {
 private:
     static std::vector<std::vector<Vegetable>> veges_start; // veges_start[i] : vegetables appear on day i
     static std::vector<std::vector<Vegetable>> veges_end;   // veges_end[i] : vegetables disappear on day i
-    
-    std::vector<std::pair<int,int>> machines;
+
     int num_waiting;
 
     std::vector<std::vector<int>> sum_future_veges;
@@ -299,11 +298,11 @@ private:
         actions.reserve(N*N*N);
         for (int r = 0; r < N; r++) {
             for (int c = 0; c < N; c++) {
-                if (has_machine[r * N + c]) {
+                if (has_harvester[r * N + c]) {
                     continue;
                 }
-                for (auto&& machine : machines) {
-                    actions.emplace_back(Action::move(machine.first, machine.second, r, c));
+                for (auto&& harvester : harvesters) {
+                    actions.emplace_back(Action::move(harvester.first, harvester.second, r, c));
                 }
             }
         }
@@ -311,7 +310,7 @@ private:
     }
 
     std::vector<Action> generate_purchase_actions() const {
-        if (!can_buy_machine()) {
+        if (!can_buy_harvester()) {
             return {{}};
         }
 
@@ -319,9 +318,10 @@ private:
         actions.reserve(N*N);
         for (int r = 0; r < N; r++) {
             for (int c = 0; c < N; c++) {
-                if (!has_machine[r * N + c]) {
-                    actions.emplace_back(Action::purchase(r, c));
+                if (has_harvester[r * N + c]) {
+                    continue;
                 }
+                actions.emplace_back(Action::buy(r, c));
             }
         }
         return actions;
@@ -392,7 +392,7 @@ int main() {
 
     while (!game.is_over()) {
 #ifndef ONLINE_JUDGE
-        std::cerr << "Day: " << game.day << " Money: " << game.money << " Harvester: " << game.num_machine << " ===============================\n";
+        std::cerr << "Day: " << game.day << " Money: " << game.money << " Harvester: " << game.num_harvester() << " ===============================\n";
 #endif
         Action action = game.select_next_action();
         game.proceed(action);
