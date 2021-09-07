@@ -148,6 +148,8 @@ public:
 
         if (num_harvester() == 0) {
             generate_buy_actions(candidates);
+        } else {
+            generate_move_actions(candidates);
         }
 
         if (candidates.empty()) {
