@@ -93,10 +93,8 @@ std::ostream& operator<<(std::ostream& os, const Action& action) {
 }
 
 struct Game {
-    static std::vector<std::vector<Vegetable>> veges_start; // veges_start[i] : vegetables appear on day i
-    static std::vector<std::vector<Vegetable>> veges_end;   // veges_end[i] : vegetables disappear on day i
-
     static int N, M, T;
+    static std::vector<std::vector<int>> veges_diff;    // veges_diff[day][r * N + c]
 
     int day = 0;
     int money = 1;
@@ -105,8 +103,11 @@ struct Game {
     std::vector<int> vege_values;
 
     Game() {
+#ifndef ONLINE_JUDGE
         assert(N > 0 && M > 0 && T > 0);
-        assert(static_cast<int>(veges_start.size()) == T && static_cast<int>(veges_end.size()) == T);
+        assert(veges_diff.size() == static_cast<size_t>(T));
+        for (auto&& diff : veges_diff) assert(diff.size() == static_cast<size_t>(N*N));
+#endif
 
         has_harvester.resize(N*N);
         vege_values.resize(N*N);
@@ -123,20 +124,29 @@ struct Game {
     inline bool can_buy_harvester() const { return money >= get_next_harvester_cost(); }
 
     void appear_veges() {
-        for (const Vegetable& vege : veges_start[day]) {
-            vege_values[vege.r * N + vege.c] = vege.v;
+        auto&& diff = veges_diff[day];
+        for (int i = 0; i < N*N; i++) {
+            if (vege_values[i] <= 0) {
+                vege_values[i] += std::max(diff[i], 0);
+            }
         }
     }
 
     void disappear_veges() {
-        for (const Vegetable& vege : veges_end[day]) {
-            vege_values[vege.r * N + vege.c] = 0;
+        auto&& diff = veges_diff[day];
+        for (int i = 0; i < N*N; i++) {
+            if (vege_values[i] > 0) {
+                vege_values[i] += std::min(diff[i], 0);
+            }
         }
     }
 
     void buy(int r, int c) {
+#ifndef ONLINE_JUDGE
         assert(!has_harvester[r * N + c]);
         assert(can_buy_harvester());
+#endif
+
         has_harvester[r * N + c] = true;
         money -= get_next_harvester_cost();
 
@@ -144,7 +154,10 @@ struct Game {
     }
 
     void move(int r1, int c1, int r2, int c2) {
+#ifndef ONLINE_JUDGE
         assert(has_harvester[r1 * N + c1] && !has_harvester[r2 * N + c2]);
+#endif
+
         std::swap(has_harvester[r1 * N + c1], has_harvester[r2 * N + c2]);
 
         auto itr = std::find(harvesters.begin(), harvesters.end(), std::make_pair(r1, c1));
@@ -298,17 +311,6 @@ private:
         return actions;
     }
 
-    bool alive_vegetable_tomorrow(int r, int c) const {
-        if (vege_values[r * N + c] == 0) {
-            return false;
-        }
-        auto&& dead_veges = veges_end[day+1];
-        auto itr = std::find_if(dead_veges.begin(), dead_veges.end(), [r,c](const Vegetable& vege) {
-            return vege.r == r && vege.c == c;
-        });
-        return itr != dead_veges.end();
-    }
-
     inline int future_window() const {
 #ifdef FUTURE_WINDOW
         return static_cast<int>(FUTURE_WINDOW);
@@ -342,20 +344,18 @@ private:
     }
 };
 int Game::N, Game::M, Game::T;
-std::vector<std::vector<Vegetable>> Game::veges_start;
-std::vector<std::vector<Vegetable>> Game::veges_end;
+std::vector<std::vector<int>> Game::veges_diff;
 
 int main() {
     std::cin >> Game::N >> Game::M >> Game::T;
 
-    Game::veges_start.resize(Game::T);
-    Game::veges_end.resize(Game::T);
+    Game::veges_diff = std::vector<std::vector<int>>(Game::T, std::vector<int>(Game::N * Game::N));
     for (int i = 0; i < Game::M; i++) {
         int r, c, s, e, v;
         std::cin >> r >> c >> s >> e >> v;
         Vegetable vege(r, c, s, e, v);
-        Game::veges_start[s].push_back(vege);
-        Game::veges_end[e].push_back(vege);
+        Game::veges_diff[s][r * Game::N + c] = +v;
+        Game::veges_diff[e][r * Game::N + c] = -v;
     }
 
     Game game;
