@@ -26,6 +26,7 @@
 | PAST                     | アルゴリズム実技検定                                                  |
 | rcl-contest-2021-long    | RECRUIT 日本橋ハーフマラソン 2021〜増刊号〜                           |
 | tenka1                   | Tenka1 Programmer Contest 2019                                        |
+| tessoku-book             | 競技プログラミングの鉄則 演習問題集                                   |
 
 ## テンプレート
 
