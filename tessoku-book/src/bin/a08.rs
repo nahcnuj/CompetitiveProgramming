@@ -4,12 +4,24 @@ use proconio::{marker::*, *};
 #[allow(unused_imports)]
 use std::{cmp::Ordering, convert::TryInto};
 
+use lib::CumlativeSum;
+
 #[fastout]
 fn main() {
     input! {
-        n: i32,
-        s: String,
-        // s: Chars,
+        h: i32,
+        w: i32,
+        x: [[i32; w]; h],
+        q: i32,
+        range: [((usize, usize), (usize, usize)); q],
+    }
+
+    // s[h][w] = 左上 (0,0) 右下 (h,w) の長方形内の整数の合計
+    let s  = x.cumlative_sum();
+
+    for ((top, left), (bottom, right)) in range {
+        let ret = s[bottom][right] - s[bottom][left - 1] - s[top - 1][right] + s[top - 1][left - 1];
+        println!("{}", ret);
     }
 }
 
