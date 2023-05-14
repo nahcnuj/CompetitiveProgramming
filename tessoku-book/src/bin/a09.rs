@@ -4,34 +4,38 @@ use proconio::{marker::*, *};
 #[allow(unused_imports)]
 use std::{cmp::Ordering, convert::TryInto};
 
-const W: usize = 1500;
-const H: usize = 1500;
-
 #[fastout]
 fn main() {
     input! {
+        h: usize,
+        w: usize,
         n: i32,
         range: [((usize, usize), (usize, usize)); n],
     }
 
     // x[y][x] = (y, x) の右/上との差分
-    let mut x = vec![vec![0; W + 2]; H + 2];
+    let mut x = vec![vec![0; w + 2]; h + 2];
     for ((top, left), (bottom, right)) in range {
         x[top][left] += 1;
-        x[top][right] -= 1;
-        x[bottom][left] -= 1;
-        x[bottom][right] += 1;
+        x[top][right + 1] -= 1;
+        x[bottom + 1][left] -= 1;
+        x[bottom + 1][right + 1] += 1;
     }
 
-    // x[y][x] = (y + 0.5, x + 0.5) の紙の枚数
+    // x[y][x] = (y, x) の積雪
     let x = x.cumlative_sum_in_place();
 
-    // eprintln!("{:?}", x);
-    let ret = x
-        .iter().take(H)
-        .map(|row| row.iter().take(W).map(|&v| if v > 0 { 1 } else { 0 }).sum::<i32>())
-        .sum::<i32>();
-    println!("{}", ret);
+    for row in x.iter().skip(1).take(h) {
+        println!(
+            "{}",
+            row.iter()
+                .skip(1)
+                .take(w)
+                .map(|v| v.to_string())
+                .collect::<Vec<_>>()
+                .join(" ")
+        );
+    }
 }
 
 pub trait CumlativeSum {
@@ -54,7 +58,7 @@ impl CumlativeSum for Vec<i32> {
     }
 
     fn cumlative_sum_in_place(&mut self) -> &Self {
-        let mut prev = *self.get(0).unwrap();
+        let mut prev = 0;
         for v in self.iter_mut().skip(1) {
             *v += prev;
             prev = *v;
@@ -94,7 +98,7 @@ impl CumlativeSum for Vec<Vec<i32>> {
         }
 
         // 縦方向合計
-        for c in 0..w {
+        for c in 1..w {
             for r in 1..h {
                 self[r][c] += self[r - 1][c];
             }
