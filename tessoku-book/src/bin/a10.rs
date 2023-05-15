@@ -16,14 +16,12 @@ fn main() {
     // max_from_left[i] = [0, i) 部屋目で最大の定員
     let mut max_from_left = a.clone();
     max_from_left.cumlative_op_in_place(cmp::max);
-    eprintln!("{:?}", &max_from_left);
 
     // max_from_right[i] = [i, n) 部屋目で最大の定員
     let mut max_from_right = a.clone();
     max_from_right.reverse();
     max_from_right.cumlative_op_in_place(cmp::max);
     max_from_right.reverse();
-    eprintln!("{:?}", &max_from_right);
 
     for &(l, r) in &range {
         let (l, r) = (l as usize - 1, r as usize - 1);
