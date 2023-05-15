@@ -14,8 +14,32 @@ fn main() {
 }
 
 pub trait CumlativeSum {
-    /// 累積和
+    /// 累積和を取る
+    /// 返り値の先頭要素は番兵の 0 である。
     fn cumlative_sum(&self) -> Self;
+
+    /// in-place に累積和を取る
+    fn cumlative_sum_in_place(&mut self) -> &Self;
+}
+
+impl CumlativeSum for Vec<i32> {
+    fn cumlative_sum(&self) -> Self {
+        let mut s = vec![0; self.len() + 1];
+        for (i, v) in self.iter().enumerate() {
+            s[i + 1] = s[i] + v;
+        }
+
+        s
+    }
+
+    fn cumlative_sum_in_place(&mut self) -> &Self {
+        let mut prev = *self.get(0).unwrap();
+        for v in self.iter_mut().skip(1) {
+            *v += prev;
+            prev = *v;
+        }
+        self
+    }
 }
 
 impl CumlativeSum for Vec<Vec<i32>> {
@@ -23,14 +47,11 @@ impl CumlativeSum for Vec<Vec<i32>> {
         let h = self.len() as usize;
         let w = self.get(0).unwrap().len() as usize;
 
-        let mut s = vec![vec![0; w + 1]; h + 1];
+        let mut s = Vec::with_capacity(h + 1);
+        s.push(vec![0; w + 1]);
         // 横方向合計
-        for (r, xs) in self.iter().enumerate() {
-            let r = r as usize + 1;
-            for (c, x) in xs.iter().enumerate() {
-                let c = c as usize + 1;
-                s[r][c] = s[r][c - 1] + x;
-            }
+        for xs in self.iter() {
+            s.push(xs.cumlative_sum());
         }
         // 縦方向合計
         for c in 1..=w {
@@ -40,5 +61,23 @@ impl CumlativeSum for Vec<Vec<i32>> {
         }
 
         s
+    }
+
+    fn cumlative_sum_in_place(&mut self) -> &Self {
+        let h = self.len() as usize;
+        let w = self.get(0).unwrap().len() as usize;
+
+        // 横方向合計
+        for xs in self.iter_mut() {
+            xs.cumlative_sum_in_place();
+        }
+        // 縦方向合計
+        for c in 0..w {
+            for r in 1..h {
+                self[r][c] += self[r - 1][c];
+            }
+        }
+
+        self
     }
 }
